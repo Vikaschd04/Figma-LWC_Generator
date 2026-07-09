@@ -94,55 +94,76 @@ Return the result as a strict JSON object containing the exact file contents for
 Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON structure. Returns only the parseable JSON.`;
 
       try {
-        const openRouterResponse = await fetch(
-          'https://openrouter.ai/api/v1/chat/completions',
-          {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${apiKey}`,
-              'HTTP-Referer': 'https://figma-to-lwc-accelerator.vercel.app',
-              'X-Title': 'Figma to LWC Accelerator'
-            },
-            body: JSON.stringify({
-              model: 'google/gemini-3.5-flash',
-              messages: [
-                {
-                  role: 'user',
-                  content: [
-                    {
-                      type: 'text',
-                      text: prompt
-                    },
-                    {
-                      type: 'image_url',
-                      image_url: {
-                        url: `data:image/png;base64,${parsed.data.imageBase64}`
+        const modelsToTry = [
+          { model: 'google/gemini-3.5-flash', max_tokens: 2048 },
+          { model: 'google/gemini-2.5-flash', max_tokens: 4096 },
+          { model: 'meta-llama/llama-3.2-11b-vision-instruct:free', max_tokens: 2048 }
+        ];
+
+        let parsedResult = null;
+        let lastError = null;
+
+      for (const config of modelsToTry) {
+        try {
+          const openRouterResponse = await fetch(
+            'https://openrouter.ai/api/v1/chat/completions',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`,
+                'HTTP-Referer': 'https://figma-to-lwc-accelerator.vercel.app',
+                'X-Title': 'Figma to LWC Accelerator'
+              },
+              body: JSON.stringify({
+                model: config.model,
+                messages: [
+                  {
+                    role: 'user',
+                    content: [
+                      {
+                        type: 'text',
+                        text: prompt
+                      },
+                      {
+                        type: 'image_url',
+                        image_url: {
+                          url: `data:image/png;base64,${parsed.data.imageBase64}`
+                        }
                       }
-                    }
-                  ]
+                    ]
+                  }
+                ],
+                max_tokens: config.max_tokens,
+                response_format: {
+                  type: 'json_object'
                 }
-              ],
-              max_tokens: 4096,
-              response_format: {
-                type: 'json_object'
-              }
-            })
+              })
+            }
+          );
+
+          if (!openRouterResponse.ok) {
+            const rawError = await openRouterResponse.text();
+            throw new Error(`Model ${config.model} failed with status ${openRouterResponse.status}: ${rawError}`);
           }
-        );
 
-        if (!openRouterResponse.ok) {
-          const rawError = await openRouterResponse.text();
-          throw new Error(`OpenRouter API returned status ${openRouterResponse.status}: ${rawError}`);
+          const responseData = await openRouterResponse.json();
+          const rawText = responseData.choices?.[0]?.message?.content;
+          if (!rawText) {
+            throw new Error(`Empty response from model ${config.model}`);
+          }
+
+          parsedResult = JSON.parse(rawText.trim());
+          break; // Success, exit fallback loop
+        } catch (err: any) {
+          console.warn(`Fallback notice: Attempt with model ${config.model} failed. Error:`, err.message || err);
+          lastError = err;
         }
+      }
 
-        const responseData = await openRouterResponse.json();
-        const rawText = responseData.choices?.[0]?.message?.content;
-        if (!rawText) {
-          throw new Error('Empty response from OpenRouter API');
-        }
-
-        const parsedResult = JSON.parse(rawText.trim());
+      if (!parsedResult) {
+        throw new Error(`All fallback LLM models failed. Last error: ${lastError?.message || lastError}`);
+      }
 
         const files = [
           { path: `${compName}/${compName}.html`, kind: 'html', content: parsedResult.html },
