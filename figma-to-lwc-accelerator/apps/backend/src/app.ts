@@ -171,7 +171,7 @@ Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON
                 'X-Title': 'Figma to LWC Accelerator'
               },
               body: JSON.stringify({
-                model: 'google/gemini-2.5-flash',
+                model: 'google/gemini-2.5-flash:free',
                 messages: [
                   {
                     role: 'user',
@@ -189,6 +189,7 @@ Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON
                     ]
                   }
                 ],
+                max_tokens: 4096,
                 response_format: {
                   type: 'json_object'
                 }
