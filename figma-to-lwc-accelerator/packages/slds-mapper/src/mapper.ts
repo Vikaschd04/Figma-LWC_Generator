@@ -6,6 +6,14 @@ export function mapToSlds(node: ClassifiedDesignNode): SldsMappedNode {
   const children = node.children.map(mapToSlds);
   const blueprint = mapNode(node);
   const cssDeclarations = mapCssDeclarations(node);
+  
+  // Attach unique scoped CSS class name if there are any visual properties extracted
+  if (Object.keys(cssDeclarations).length > 0) {
+    const sanitizedId = node.id.replace(/[^a-zA-Z0-9_-]/g, '_');
+    const ftlClass = `ftl-node-${sanitizedId}`;
+    blueprint.classes.push(ftlClass);
+  }
+
   const warnings = [...node.classification.warnings, ...mapWarnings(node, cssDeclarations)];
 
   return {
@@ -29,7 +37,7 @@ function mapNode(node: ClassifiedDesignNode): MappingBlueprint {
       return {
         renderKind: 'lightning',
         tagName: 'lightning-button',
-        classes: ['slds-m-top_small'],
+        classes: [],
         attributes: {
           label: getChildText(node) || node.name,
           variant: inferButtonVariant(node.name)
@@ -39,7 +47,7 @@ function mapNode(node: ClassifiedDesignNode): MappingBlueprint {
       return {
         renderKind: 'lightning',
         tagName: 'lightning-input',
-        classes: ['slds-m-bottom_small'],
+        classes: [],
         attributes: {
           label: node.name
         }
@@ -59,21 +67,21 @@ function mapNode(node: ClassifiedDesignNode): MappingBlueprint {
       return {
         renderKind: 'html',
         tagName: 'section',
-        classes: ['slds-card', 'slds-p-around_medium'],
+        classes: ['slds-card'],
         attributes: {}
       };
     case 'heading':
       return {
         renderKind: 'html',
         tagName: 'h2',
-        classes: ['slds-text-heading_small'],
+        classes: [],
         attributes: {}
       };
     case 'bodyText':
       return {
         renderKind: 'html',
         tagName: 'p',
-        classes: ['slds-text-body_regular'],
+        classes: [],
         attributes: {}
       };
     case 'badge':
@@ -89,7 +97,7 @@ function mapNode(node: ClassifiedDesignNode): MappingBlueprint {
       return {
         renderKind: 'html',
         tagName: 'div',
-        classes: ['slds-p-around_medium'],
+        classes: [],
         attributes: {}
       };
     case 'image':
@@ -112,19 +120,10 @@ function mapNode(node: ClassifiedDesignNode): MappingBlueprint {
 }
 
 function mapLayout(node: ClassifiedDesignNode): MappingBlueprint {
-  if (node.layout?.direction === 'row') {
-    return {
-      renderKind: 'html',
-      tagName: 'div',
-      classes: ['slds-grid', 'slds-gutters'],
-      attributes: {}
-    };
-  }
-
   return {
     renderKind: 'html',
     tagName: 'div',
-    classes: ['ftl-flex-column'],
+    classes: [],
     attributes: {}
   };
 }
@@ -132,20 +131,113 @@ function mapLayout(node: ClassifiedDesignNode): MappingBlueprint {
 function mapCssDeclarations(node: ClassifiedDesignNode): Record<string, string> {
   const cssDeclarations: Record<string, string> = {};
 
-  if (node.semanticType === 'layout' && node.layout?.direction === 'column') {
+  // Flex Layout configurations
+  if (node.semanticType === 'layout') {
     cssDeclarations.display = 'flex';
-    cssDeclarations['flex-direction'] = 'column';
+    if (node.layout?.direction === 'row') {
+      cssDeclarations['flex-direction'] = 'row';
+    } else if (node.layout?.direction === 'column') {
+      cssDeclarations['flex-direction'] = 'column';
+    }
   }
 
-  if (node.layout?.gap !== undefined && needsCustomGap(node)) {
+  // Alignments (Justify & Align)
+  if (node.layout?.justifyContent) {
+    cssDeclarations['justify-content'] = node.layout.justifyContent;
+  }
+  if (node.layout?.alignItems) {
+    cssDeclarations['align-items'] = node.layout.alignItems;
+  }
+
+  // Flex grow
+  if (node.layout?.flexGrow !== undefined) {
+    cssDeclarations['flex-grow'] = String(node.layout.flexGrow);
+  }
+
+  // Gap
+  if (node.layout?.gap !== undefined) {
     cssDeclarations.gap = `${node.layout.gap}px`;
+  }
+
+  // Padding
+  if (node.layout?.padding) {
+    const p = node.layout.padding;
+    cssDeclarations.padding = `${p.top}px ${p.right}px ${p.bottom}px ${p.left}px`;
+  }
+
+  // Background Fill (Solid paints)
+  if (node.styles?.fills && node.styles.fills.length > 0) {
+    const fill = node.styles.fills[0];
+    cssDeclarations['background-color'] = getCssColor(fill.hex, fill.opacity);
+  }
+
+  // Text Color (Solid paints on typography/text nodes)
+  if ((node.semanticType === 'heading' || node.semanticType === 'bodyText') && node.styles?.fills && node.styles.fills.length > 0) {
+    const fill = node.styles.fills[0];
+    cssDeclarations.color = getCssColor(fill.hex, fill.opacity);
+  }
+
+  // Borders & Strokes
+  if (node.styles?.strokes && node.styles.strokes.length > 0) {
+    const stroke = node.styles.strokes[0];
+    const weight = node.styles.strokeWeight ?? 1;
+    cssDeclarations.border = `${weight}px solid ${getCssColor(stroke.hex, stroke.opacity)}`;
+  }
+
+  // Border Radius
+  if (node.styles?.borderRadius !== undefined) {
+    cssDeclarations['border-radius'] = `${node.styles.borderRadius}px`;
+  }
+
+  // Opacity
+  if (node.styles?.opacity !== undefined) {
+    cssDeclarations.opacity = String(node.styles.opacity);
+  }
+
+  // Text alignment
+  if (node.styles?.textAlign !== undefined) {
+    cssDeclarations['text-align'] = node.styles.textAlign;
+  }
+
+  // Typography details
+  if (node.styles?.typography) {
+    const t = node.styles.typography;
+    if (t.fontFamily) {
+      cssDeclarations['font-family'] = `'${t.fontFamily}', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
+    }
+    if (t.fontSize !== undefined) {
+      cssDeclarations['font-size'] = `${t.fontSize}px`;
+    }
+    if (t.fontWeight !== undefined) {
+      cssDeclarations['font-weight'] = String(t.fontWeight);
+    }
+    if (t.lineHeight !== undefined) {
+      cssDeclarations['line-height'] = `${t.lineHeight}px`;
+    }
+    if (t.letterSpacing !== undefined) {
+      cssDeclarations['letter-spacing'] = `${t.letterSpacing}px`;
+    }
+  }
+
+  // Width & Height for visual blocks
+  if (node.semanticType === 'image' || node.semanticType === 'container' || node.semanticType === 'unknown') {
+    if (node.layout?.width !== undefined) {
+      cssDeclarations.width = `${node.layout.width}px`;
+    }
+    if (node.layout?.height !== undefined) {
+      cssDeclarations.height = `${node.layout.height}px`;
+    }
   }
 
   return cssDeclarations;
 }
 
-function needsCustomGap(node: ClassifiedDesignNode): boolean {
-  return node.semanticType === 'layout' && node.layout?.direction === 'column';
+function getCssColor(hex: string, opacity: number): string {
+  if (opacity === 1) return hex;
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
 function mapWarnings(

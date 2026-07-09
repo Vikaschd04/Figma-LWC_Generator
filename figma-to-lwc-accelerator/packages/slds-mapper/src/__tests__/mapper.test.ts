@@ -15,7 +15,7 @@ describe('mapToSlds', () => {
     expect(button).toMatchObject({
       renderKind: 'lightning',
       tagName: 'lightning-button',
-      classes: ['slds-m-top_small'],
+      classes: ['ftl-node-1_3'],
       attributes: {
         label: 'View Details',
         variant: 'brand'
@@ -29,7 +29,7 @@ describe('mapToSlds', () => {
     expect(mapped).toMatchObject({
       renderKind: 'html',
       tagName: 'section',
-      classes: ['slds-card', 'slds-p-around_medium']
+      classes: ['slds-card', 'ftl-node-1_1']
     });
   });
 
@@ -40,12 +40,12 @@ describe('mapToSlds', () => {
 
     expect(title).toMatchObject({
       tagName: 'h2',
-      classes: ['slds-text-heading_small'],
+      classes: ['ftl-node-1_2'],
       text: 'Account Health'
     });
     expect(subtitle).toMatchObject({
       tagName: 'p',
-      classes: ['slds-text-body_regular'],
+      classes: ['ftl-node-1_5'],
       text: 'Current customer risk overview'
     });
   });
@@ -76,13 +76,25 @@ describe('mapToSlds', () => {
   });
 
   it('generates custom CSS only when needed', () => {
-    const rowNode: ClassifiedDesignNode = {
-      id: 'row-1',
-      name: 'Content Row',
+    const containerNode: ClassifiedDesignNode = {
+      id: 'container-1',
+      name: 'Base Container',
+      semanticType: 'container',
+      classification: {
+        semanticType: 'container',
+        confidence: 0.62,
+        reason: 'Node is a generic container.',
+        warnings: []
+      },
+      children: []
+    };
+    const columnNode: ClassifiedDesignNode = {
+      id: 'column-1',
+      name: 'Content Column',
       semanticType: 'layout',
       layout: {
-        direction: 'row',
-        gap: 8
+        direction: 'column',
+        gap: 12
       },
       classification: {
         semanticType: 'layout',
@@ -92,17 +104,8 @@ describe('mapToSlds', () => {
       },
       children: []
     };
-    const columnNode: ClassifiedDesignNode = {
-      ...rowNode,
-      id: 'column-1',
-      name: 'Content Column',
-      layout: {
-        direction: 'column',
-        gap: 12
-      }
-    };
 
-    expect(mapToSlds(rowNode).cssDeclarations).toEqual({});
+    expect(mapToSlds(containerNode).cssDeclarations).toEqual({});
     expect(mapToSlds(columnNode).cssDeclarations).toEqual({
       display: 'flex',
       'flex-direction': 'column',

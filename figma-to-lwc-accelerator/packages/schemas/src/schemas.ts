@@ -11,6 +11,9 @@ export const figmaNodeTypeSchema = z.enum([
 ]);
 
 export const figmaLayoutModeSchema = z.enum(['NONE', 'HORIZONTAL', 'VERTICAL']);
+export const figmaAxisAlignSchema = z.enum(['MIN', 'CENTER', 'MAX', 'SPACE_BETWEEN', 'BASELINE']);
+export const figmaSizingModeSchema = z.enum(['FIXED', 'HUG', 'FILL']);
+export const figmaTextAlignSchema = z.enum(['LEFT', 'CENTER', 'RIGHT', 'JUSTIFIED']);
 
 export const rawFigmaColorSchema = z.object({
   r: z.number().min(0).max(1),
@@ -42,17 +45,25 @@ export const rawFigmaNodeSchema: z.ZodType<{
   x?: number;
   y?: number;
   layoutMode?: z.infer<typeof figmaLayoutModeSchema>;
+  primaryAxisAlignItems?: z.infer<typeof figmaAxisAlignSchema>;
+  counterAxisAlignItems?: z.infer<typeof figmaAxisAlignSchema>;
+  layoutAlign?: string;
+  layoutGrow?: number;
+  primaryAxisSizingMode?: z.infer<typeof figmaSizingModeSchema>;
+  counterAxisSizingMode?: z.infer<typeof figmaSizingModeSchema>;
   itemSpacing?: number;
   paddingTop?: number;
   paddingRight?: number;
   paddingBottom?: number;
   paddingLeft?: number;
   cornerRadius?: number;
+  opacity?: number;
   characters?: string;
   fills?: z.infer<typeof rawFigmaPaintSchema>[];
   strokes?: z.infer<typeof rawFigmaPaintSchema>[];
   strokeWeight?: number;
   style?: z.infer<typeof rawFigmaTextStyleSchema>;
+  textAlignHorizontal?: z.infer<typeof figmaTextAlignSchema>;
   children?: z.infer<typeof rawFigmaNodeSchema>[];
 }> = z.lazy(() =>
   z.object({
@@ -64,17 +75,25 @@ export const rawFigmaNodeSchema: z.ZodType<{
     x: z.number().optional(),
     y: z.number().optional(),
     layoutMode: figmaLayoutModeSchema.optional(),
+    primaryAxisAlignItems: figmaAxisAlignSchema.optional(),
+    counterAxisAlignItems: figmaAxisAlignSchema.optional(),
+    layoutAlign: z.string().optional(),
+    layoutGrow: z.number().optional(),
+    primaryAxisSizingMode: figmaSizingModeSchema.optional(),
+    counterAxisSizingMode: figmaSizingModeSchema.optional(),
     itemSpacing: z.number().nonnegative().optional(),
     paddingTop: z.number().nonnegative().optional(),
     paddingRight: z.number().nonnegative().optional(),
     paddingBottom: z.number().nonnegative().optional(),
     paddingLeft: z.number().nonnegative().optional(),
     cornerRadius: z.number().nonnegative().optional(),
+    opacity: z.number().optional(),
     characters: z.string().optional(),
     fills: z.array(rawFigmaPaintSchema).optional(),
     strokes: z.array(rawFigmaPaintSchema).optional(),
     strokeWeight: z.number().nonnegative().optional(),
     style: rawFigmaTextStyleSchema.optional(),
+    textAlignHorizontal: figmaTextAlignSchema.optional(),
     children: z.array(rawFigmaNodeSchema).optional()
   })
 );
@@ -107,7 +126,10 @@ export const normalizedLayoutSchema = z.object({
   width: z.number().nonnegative().optional(),
   height: z.number().nonnegative().optional(),
   gap: z.number().nonnegative().optional(),
-  padding: normalizedSpacingSchema.optional()
+  padding: normalizedSpacingSchema.optional(),
+  justifyContent: z.string().optional(),
+  alignItems: z.string().optional(),
+  flexGrow: z.number().optional()
 });
 
 export const normalizedColorSchema = z.object({
@@ -128,6 +150,8 @@ export const normalizedStyleSchema = z.object({
   strokes: z.array(normalizedColorSchema),
   strokeWeight: z.number().nonnegative().optional(),
   borderRadius: z.number().nonnegative().optional(),
+  opacity: z.number().optional(),
+  textAlign: z.string().optional(),
   typography: normalizedTypographySchema.optional()
 });
 

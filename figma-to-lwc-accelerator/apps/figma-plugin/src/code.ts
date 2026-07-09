@@ -53,17 +53,25 @@ interface SerializedNode {
   x?: number;
   y?: number;
   layoutMode?: string;
+  primaryAxisAlignItems?: string;
+  counterAxisAlignItems?: string;
+  layoutAlign?: string;
+  layoutGrow?: number;
+  primaryAxisSizingMode?: string;
+  counterAxisSizingMode?: string;
   itemSpacing?: number;
   paddingTop?: number;
   paddingRight?: number;
   paddingBottom?: number;
   paddingLeft?: number;
   cornerRadius?: number;
+  opacity?: number;
   characters?: string;
   fills?: SerializedPaint[];
   strokes?: SerializedPaint[];
   strokeWeight?: number;
   style?: SerializedTextStyle;
+  textAlignHorizontal?: string;
   children?: SerializedNode[];
 }
 
@@ -107,6 +115,31 @@ function serializeNode(node: SceneNode): SerializedNode {
     if ('paddingLeft' in node && typeof node.paddingLeft === 'number') {
       result.paddingLeft = node.paddingLeft;
     }
+    if ('primaryAxisAlignItems' in node && typeof node.primaryAxisAlignItems === 'string') {
+      result.primaryAxisAlignItems = node.primaryAxisAlignItems;
+    }
+    if ('counterAxisAlignItems' in node && typeof node.counterAxisAlignItems === 'string') {
+      result.counterAxisAlignItems = node.counterAxisAlignItems;
+    }
+    if ('primaryAxisSizingMode' in node && typeof node.primaryAxisSizingMode === 'string') {
+      result.primaryAxisSizingMode = node.primaryAxisSizingMode;
+    }
+    if ('counterAxisSizingMode' in node && typeof node.counterAxisSizingMode === 'string') {
+      result.counterAxisSizingMode = node.counterAxisSizingMode;
+    }
+  }
+
+  // Layout alignments for children of Auto Layouts
+  if ('layoutAlign' in node && typeof node.layoutAlign === 'string') {
+    result.layoutAlign = node.layoutAlign;
+  }
+  if ('layoutGrow' in node && typeof node.layoutGrow === 'number') {
+    result.layoutGrow = node.layoutGrow;
+  }
+
+  // Opacity
+  if ('opacity' in node && typeof node.opacity === 'number') {
+    result.opacity = node.opacity;
   }
 
   // Corner Radius
@@ -146,6 +179,10 @@ function serializeNode(node: SceneNode): SerializedNode {
     }
 
     result.style = textStyle;
+
+    if ('textAlignHorizontal' in node && typeof node.textAlignHorizontal === 'string') {
+      result.textAlignHorizontal = node.textAlignHorizontal;
+    }
   }
 
   // Fills & Strokes

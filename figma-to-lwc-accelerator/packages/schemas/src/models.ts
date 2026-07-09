@@ -3,6 +3,12 @@ export type FigmaNodeType =
 
 export type FigmaLayoutMode = 'NONE' | 'HORIZONTAL' | 'VERTICAL';
 
+export type FigmaAxisAlign = 'MIN' | 'CENTER' | 'MAX' | 'SPACE_BETWEEN' | 'BASELINE';
+
+export type FigmaSizingMode = 'FIXED' | 'HUG' | 'FILL';
+
+export type FigmaTextAlign = 'LEFT' | 'CENTER' | 'RIGHT' | 'JUSTIFIED';
+
 export interface RawFigmaColor {
   r: number;
   g: number;
@@ -33,17 +39,25 @@ export interface RawFigmaNode {
   x?: number;
   y?: number;
   layoutMode?: FigmaLayoutMode;
+  primaryAxisAlignItems?: FigmaAxisAlign;
+  counterAxisAlignItems?: FigmaAxisAlign;
+  layoutAlign?: string;
+  layoutGrow?: number;
+  primaryAxisSizingMode?: FigmaSizingMode;
+  counterAxisSizingMode?: FigmaSizingMode;
   itemSpacing?: number;
   paddingTop?: number;
   paddingRight?: number;
   paddingBottom?: number;
   paddingLeft?: number;
   cornerRadius?: number;
+  opacity?: number;
   characters?: string;
   fills?: RawFigmaPaint[];
   strokes?: RawFigmaPaint[];
   strokeWeight?: number;
   style?: RawFigmaTextStyle;
+  textAlignHorizontal?: FigmaTextAlign;
   children?: RawFigmaNode[];
 }
 
@@ -75,6 +89,9 @@ export interface NormalizedLayout {
   height?: number;
   gap?: number;
   padding?: NormalizedSpacing;
+  justifyContent?: string;
+  alignItems?: string;
+  flexGrow?: number;
 }
 
 export interface NormalizedColor {
@@ -95,6 +112,8 @@ export interface NormalizedStyle {
   strokes: NormalizedColor[];
   strokeWeight?: number;
   borderRadius?: number;
+  opacity?: number;
+  textAlign?: string;
   typography?: NormalizedTypography;
 }
 

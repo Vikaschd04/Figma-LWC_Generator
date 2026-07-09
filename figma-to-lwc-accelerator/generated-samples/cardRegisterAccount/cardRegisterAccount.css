@@ -1,3 +1,21 @@
 :host {
   display: block;
 }
+
+.ftl-node-1_100 {
+  gap: 12px;
+  padding: 16px 16px 16px 16px;
+  background-color: #ffffff;
+}
+
+.ftl-node-1_101 {
+  background-color: #1a1a1a;
+}
+
+.ftl-node-1_102 {
+  background-color: #1a1a1a;
+}
+
+.ftl-node-1_103 {
+  background-color: #1a1a1a;
+}

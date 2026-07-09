@@ -1,34 +1,7 @@
 <template>
-  <section class="slds-card slds-p-around_medium">
-    <lightning-input
-      class="slds-m-bottom_small"
-      label="Input / Account Name"
-      value="{inputAccountNameValue}"
-      onchange="
-        {
-          handleInputAccountNameChange;
-        }
-      "
-    ></lightning-input>
-    <lightning-input
-      class="slds-m-bottom_small"
-      label="Input / Email Address"
-      value="{inputEmailAddressValue}"
-      onchange="
-        {
-          handleInputEmailAddressChange;
-        }
-      "
-    ></lightning-input>
-    <lightning-button
-      class="slds-m-top_small"
-      label="Button / Register Account"
-      variant="brand"
-      onclick="
-        {
-          handleButtonRegisterAccountClick;
-        }
-      "
-    ></lightning-button>
+  <section class="slds-card ftl-node-1_100">
+    <lightning-input class="ftl-node-1_101" label="Input / Account Name" value={inputAccountNameValue} onchange={handleInputAccountNameChange}></lightning-input>
+    <lightning-input class="ftl-node-1_102" label="Input / Email Address" value={inputEmailAddressValue} onchange={handleInputEmailAddressChange}></lightning-input>
+    <lightning-button class="ftl-node-1_103" label="Button / Register Account" variant="brand" onclick={handleButtonRegisterAccountClick}></lightning-button>
   </section>
 </template>

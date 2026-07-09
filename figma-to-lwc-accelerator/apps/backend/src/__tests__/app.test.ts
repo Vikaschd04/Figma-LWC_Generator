@@ -36,7 +36,7 @@ describe('backend API', () => {
       componentName: 'accountHealthCard',
       summary: {
         fileCount: 5,
-        warningCount: 0
+        warningCount: 5
       }
     });
     expect(response.body.files.map((file: { path: string }) => file.path)).toContain(

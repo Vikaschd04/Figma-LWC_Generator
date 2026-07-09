@@ -186,12 +186,13 @@ function renderJs(componentName: string, target: string, blueprint?: FeatureBlue
 
 function renderCss(root: SldsMappedNode): string {
   const declarations = collectCssDeclarations(root);
+  const base = ':host {\n  display: block;\n}';
 
   if (declarations.length === 0) {
-    return ':host {\n  display: block;\n}\n';
+    return `${base}\n`;
   }
 
-  return `${declarations.join('\n\n')}\n`;
+  return `${base}\n\n${declarations.join('\n\n')}\n`;
 }
 
 function collectCssDeclarations(root: SldsMappedNode): string[] {
