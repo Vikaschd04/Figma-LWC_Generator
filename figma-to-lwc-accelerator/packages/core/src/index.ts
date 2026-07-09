@@ -6,4 +6,6 @@ export function getProjectName(): string {
 
 export * from './classifier';
 export * from './normalizer';
+export * from './blueprint';
+export * from './validator';
 export * from '../../schemas/src';

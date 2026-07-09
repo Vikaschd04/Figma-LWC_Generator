@@ -10,16 +10,15 @@ Design-to-code output often creates brittle markup, inline styles, and code that
 
 ## Architecture Overview
 
-- `apps/backend`: future Node.js API for normalization, mapping, validation, and generation.
-- `apps/figma-plugin`: future Figma plugin for selected frame extraction.
-- `apps/vscode-extension`: future VS Code workflow for previewing and exporting generated LWC files.
-- `packages/core`: shared orchestration and reusable utilities.
-- `packages/schemas`: shared validation schemas and TypeScript models.
-- `packages/lwc-generator`: future LWC file generation logic.
-- `packages/slds-mapper`: future classified-design to SLDS mapping logic.
-- `packages/test-fixtures`: shared Figma-style fixtures for tests.
-- `generated-samples`: future generated demo components.
-- `docs`: project architecture and engineering guidance.
+- `apps/backend`: Express API for normalization, mapping, user-story-driven blueprint compilation, and LWC generation.
+- `apps/figma-plugin`: Figma editor plugin for real-time selection frame extraction and LWC file previewing.
+- `apps/vscode-extension`: VS Code extension for importing design selections from clipboard, resolving local Salesforce DX directories, and generating files.
+- `packages/core`: Shared orchestration: normalizer, classifier, blueprint compiler, and quality/a11y validation.
+- `packages/schemas`: Shared Zod validation schemas and TypeScript model definitions.
+- `packages/lwc-generator`: LWC code generator parsing mapped trees and blueprints.
+- `packages/slds-mapper`: Design element mapping to Salesforce base components and SLDS layouts.
+- `packages/test-fixtures`: Shared Figma selection JSON fixtures.
+- `docs`: Project architecture and developer user guides.
 
 ## Install
 
@@ -45,29 +44,33 @@ curl http://localhost:3000/health
 
 ```bash
 npm test
+```
+
+Useful quality checks:
+
+```bash
 npm run lint
+```
+
+Strict compiler and formatter checks:
+
+```bash
 npm run typecheck
 npm run format:check
 ```
 
 ## Current MVP Capabilities
 
-- Monorepo folder structure is in place.
-- TypeScript, Jest, ESLint, and Prettier are configured.
-- A smoke test verifies the baseline test pipeline.
-- Initial documentation exists for project continuity.
-- Core TypeScript models exist for raw Figma nodes, normalized design nodes, classifications, generated files, and validation results.
-- Zod validation utilities exist for raw Figma nodes, normalized design nodes, and generated files.
-- Raw Figma-style JSON can be normalized into a stable intermediate design tree.
-- A reusable Account Health Card raw Figma fixture is available for tests and future demo flows.
-- Normalized design nodes can be classified into semantic UI types with confidence, reasons, and warnings.
-- Classified design nodes can be mapped to Salesforce-oriented render primitives, Lightning base components, SLDS classes, and scoped CSS needs.
-- Mapped render trees can generate LWC HTML, JavaScript, CSS, metadata XML, and component README files.
-- Backend API exposes health, normalization, and LWC generation endpoints.
+- **Figma Integration**: Real-time selected frame parser traversing nested flex directions and Solid fills.
+- **Normalizer**: Transforms figma channels, paddings, borders, and margins into structural layout grids.
+- **Semantic Classifier**: Analyzes node style ratios, sizing, and names to identify inputs, cards, and buttons.
+- **SLDS Mapper**: Converts semantic targets into Salesforce base controls (`lightning-input`, `lightning-button`, `lightning-icon`) and SLDS grid patterns.
+- **Blueprint Compiler**: Scans product user stories for toast alerts, Apex controller calls, recordId contexts, and binds interactive inputs.
+- **LWC Generator**: Emits standard, fully-fleshed markup, CSS stylesheet rules, metadata descriptor XMLs, and class lifecycle hooks.
+- **Quality & Accessibility Validator**: Audits code outcomes against WCAG standard labels, alt properties, inline style blocks, and controller import decorators.
+- **VS Code Extension**: Supports clipboard importing, local Salesforce DX paths auto-detection, and files previewing.
 
 ## Known Limitations
 
-- No Figma extraction is implemented yet.
 - Component classification is rule-based and intentionally conservative.
-- Generated LWC behavior is intentionally minimal and requires developer review before deployment.
-- VS Code extension and Figma plugin runtime are not implemented yet.
+- Generated LWC behavior is a functional MVP (button clicks, form changes, toast alerts) and should be validated before production deployment.

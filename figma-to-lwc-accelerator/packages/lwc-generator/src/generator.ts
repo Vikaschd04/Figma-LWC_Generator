@@ -1,4 +1,9 @@
-import type { GeneratedFile, GeneratedLwcBundle, SldsMappedNode } from '../../schemas/src';
+import type {
+  GeneratedFile,
+  GeneratedLwcBundle,
+  SldsMappedNode,
+  FeatureBlueprint
+} from '../../schemas/src';
 
 export interface LwcGeneratorOptions {
   target?: 'lightning__RecordPage' | 'lightning__AppPage' | 'lightning__HomePage';
@@ -10,6 +15,7 @@ export interface LwcGeneratorInput {
   componentName: string;
   mappedRoot: SldsMappedNode;
   options?: LwcGeneratorOptions;
+  blueprint?: FeatureBlueprint;
 }
 
 export function generateLwcBundle(input: LwcGeneratorInput): GeneratedLwcBundle {
@@ -18,8 +24,8 @@ export function generateLwcBundle(input: LwcGeneratorInput): GeneratedLwcBundle 
   const apiVersion = input.options?.apiVersion ?? '61.0';
   const warnings = collectWarnings(input.mappedRoot);
   const files: GeneratedFile[] = [
-    createFile(componentName, 'html', renderHtml(input.mappedRoot)),
-    createFile(componentName, 'js', renderJs(componentName, target)),
+    createFile(componentName, 'html', renderHtml(input.mappedRoot, input.blueprint)),
+    createFile(componentName, 'js', renderJs(componentName, target, input.blueprint)),
     createFile(componentName, 'css', renderCss(input.mappedRoot)),
     createFile(componentName, 'metaXml', renderMetaXml(apiVersion, target))
   ];
@@ -58,13 +64,24 @@ function createFile(
   };
 }
 
-function renderHtml(root: SldsMappedNode): string {
-  return `<template>\n${renderNode(root, 1)}\n</template>\n`;
+function renderHtml(root: SldsMappedNode, blueprint?: FeatureBlueprint): string {
+  return `<template>\n${renderNode(root, 1, blueprint)}\n</template>\n`;
 }
 
-function renderNode(node: SldsMappedNode, depth: number): string {
+function renderNode(node: SldsMappedNode, depth: number, blueprint?: FeatureBlueprint): string {
   const indent = '  '.repeat(depth);
-  const attributes = renderAttributes(node);
+  const handlers = blueprint?.eventHandlers.filter((h) => h.targetNodeId === node.id) ?? [];
+  let attributes = renderAttributes(node);
+
+  handlers.forEach((handler) => {
+    if (handler.actionKind === 'inputBinding') {
+      const bindingProperty = handler.actionDetails?.property;
+      attributes += ` value={${bindingProperty}} onchange={${handler.name}}`;
+    } else {
+      attributes += ` ${handler.domEvent}={${handler.name}}`;
+    }
+  });
+
   const openTag = `${indent}<${node.tagName}${attributes}>`;
 
   if (isSelfClosing(node)) {
@@ -72,7 +89,7 @@ function renderNode(node: SldsMappedNode, depth: number): string {
   }
 
   const childLines = shouldRenderChildren(node)
-    ? node.children.map((child) => renderNode(child, depth + 1))
+    ? node.children.map((child) => renderNode(child, depth + 1, blueprint))
     : [];
   const text = node.text ? [`${'  '.repeat(depth + 1)}${escapeHtml(node.text)}`] : [];
   const content = [...text, ...childLines];
@@ -107,15 +124,64 @@ function shouldRenderChildren(node: SldsMappedNode): boolean {
   return node.renderKind !== 'lightning' && node.tagName !== 'img';
 }
 
-function renderJs(componentName: string, target: string): string {
+function renderJs(componentName: string, target: string, blueprint?: FeatureBlueprint): string {
   const className = toPascalCase(componentName);
-  const usesRecordId = target === 'lightning__RecordPage';
-  const importLine = usesRecordId
-    ? "import { LightningElement, api } from 'lwc';"
-    : "import { LightningElement } from 'lwc';";
-  const recordIdLine = usesRecordId ? '\n  @api recordId;\n' : '';
 
-  return `${importLine}\n\nexport default class ${className} extends LightningElement {${recordIdLine}}\n`;
+  const baseLwcImports = new Set<string>(['LightningElement']);
+  const extraImports = new Set<string>();
+
+  if (target === 'lightning__RecordPage') {
+    baseLwcImports.add('api');
+  }
+
+  if (blueprint) {
+    blueprint.properties.forEach((p) => {
+      if (p.isApi) {
+        baseLwcImports.add('api');
+      }
+    });
+    blueprint.imports.forEach((imp) => {
+      extraImports.add(imp);
+    });
+  }
+
+  const importLine = `import { ${Array.from(baseLwcImports).join(', ')} } from 'lwc';`;
+  const extraImportLines =
+    Array.from(extraImports).length > 0 ? '\n' + Array.from(extraImports).join('\n') : '';
+
+  let classBody = '';
+
+  if (
+    target === 'lightning__RecordPage' &&
+    (!blueprint || !blueprint.properties.some((p) => p.name === 'recordId'))
+  ) {
+    classBody += '\n  @api recordId;\n';
+  }
+
+  if (blueprint) {
+    blueprint.properties.forEach((p) => {
+      const decorator = p.isApi ? '@api ' : '';
+      const defaultVal = p.defaultValue !== undefined ? ` = ${p.defaultValue}` : '';
+      const docComment = p.description ? `  // ${p.description}\n` : '';
+      classBody += `\n${docComment}  ${decorator}${p.name}${defaultVal};\n`;
+    });
+
+    blueprint.eventHandlers.forEach((handler) => {
+      if (handler.actionKind === 'inputBinding') {
+        const bindingProperty = handler.actionDetails?.property;
+        classBody += `\n  ${handler.name}(event) {\n    this.${bindingProperty} = event.target.value;\n  }\n`;
+      } else if (handler.actionKind === 'toast') {
+        const title = handler.actionDetails?.title || 'Notification';
+        const message = handler.actionDetails?.message || 'Action executed successfully.';
+        const variant = handler.actionDetails?.variant || 'info';
+        classBody += `\n  ${handler.name}() {\n    this.dispatchEvent(\n      new ShowToastEvent({\n        title: '${title}',\n        message: '${message}',\n        variant: '${variant}'\n      })\n    );\n  }\n`;
+      } else {
+        classBody += `\n  ${handler.name}() {\n    // Custom logic for ${handler.name}\n    console.log('Action triggered: ${handler.name}');\n  }\n`;
+      }
+    });
+  }
+
+  return `${importLine}${extraImportLines}\n\nexport default class ${className} extends LightningElement {${classBody}}\n`;
 }
 
 function renderCss(root: SldsMappedNode): string {

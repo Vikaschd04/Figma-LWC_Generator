@@ -65,9 +65,23 @@ Phase 5 implementation:
 - Add `@api recordId` only when record page behavior is selected or explicitly required.
 - Phase 5 supports `lightning__RecordPage`, `lightning__AppPage`, and `lightning__HomePage` targets.
 
-## Accessibility Rules
+## Accessibility Rules (Phase 10 Validation Gates)
 
-- Preserve semantic heading and text structure.
-- Add accessible labels where interactive controls require them.
-- Do not generate unsafe HTML rendering.
-- Escape generated text and attributes before writing HTML.
+Accessibility is strictly checked during the validation phase (`validateLwcBundle`):
+
+- **Inputs**: Every `lightning-input` must have a non-empty `label` attribute (fails with `A11Y_INPUT_MISSING_LABEL`).
+- **Buttons**: Every `lightning-button` must have a non-empty `label` or `title` attribute (fails with `A11Y_BUTTON_MISSING_LABEL`).
+- **Images**: Every `img` tag must have a non-empty `alt` attribute (fails with `A11Y_IMAGE_MISSING_ALT`).
+- **Icons**: Every `lightning-icon` must have a non-empty `alternative-text` or `alternativeText` attribute (fails with `A11Y_ICON_MISSING_ALT`).
+
+## Functional Blueprint Rules (Phase 9)
+
+Functional properties are generated into LWC templates and class bodies dynamically:
+
+- **Event Listeners**: Mapped event triggers render direct bindings in HTML (e.g. `onclick={handleActionClick}`).
+- **Form Inputs**: Mapped inputs are value-bound (`value={nameValue}`) and hook change events (`onchange={handleNameChange}`) to mutate internal class properties.
+- **Imports Validation**:
+  - Any LWC class using `@api` properties must import `api` from `'lwc'` (fails with `QUALITY_MISSING_API_IMPORT`).
+  - Any LWC class using `@wire` configurations must import `wire` from `'lwc'` (fails with `QUALITY_MISSING_WIRE_IMPORT`).
+  - Any LWC class using `ShowToastEvent` must import `ShowToastEvent` from `'lightning/platformShowToastEvent'` (fails with `QUALITY_MISSING_TOAST_IMPORT`).
+- **Page Targets**: If targeting `lightning__RecordPage`, the class body should declare `@api recordId` (warns with `QUALITY_RECORD_PAGE_MISSING_RECORD_ID` if absent).

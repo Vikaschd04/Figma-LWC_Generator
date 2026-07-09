@@ -16,13 +16,20 @@ Phase 5 unit tests cover generated file names, nonempty output, record-page `rec
 
 Phase 6 backend tests cover health checks, normalization, LWC generation, validation failures, and internal error handling with Supertest.
 
+Phase 9 unit tests cover keyword extraction rules (e.g. toast notification triggers, Apex imports, recordId page targets) and reactive data bindings inside the LWC generator.
+
+Phase 10 unit tests cover the Accessibility (a11y) validation checks (missing input labels, button labels, alt text, icon alternativeText), inline styles checks, and JS controller decorator import audits.
+
 ## Integration Testing Approach
 
-Integration tests will validate end-to-end flows from raw Figma-like JSON through generated LWC file output.
+Integration tests validate end-to-end paths:
+
+- Input design JSON + User Story parsed via Express backend `/api/generate-lwc` $\to$ verify code matches functional event boundaries and runs clean of validation errors.
+- Local VS Code extensions importing the clipboard design payloads $\to$ validating files are written to standard Salesforce DX paths and loaded into editor windows.
 
 ## Snapshot Testing For Generated Code
 
-Snapshot tests will protect generated HTML, JavaScript, CSS, metadata XML, and component README output once the generator is implemented.
+Snapshot tests protect generated HTML, JavaScript, CSS, metadata XML, and component README output to ensure layout structures remain consistent.
 
 ## Manual QA Checklist
 
@@ -35,3 +42,21 @@ Snapshot tests will protect generated HTML, JavaScript, CSS, metadata XML, and c
 ## Future E2E Testing Plan
 
 Future hardening can add browser-level tests for the backend preview workflow, VS Code extension command tests, and manual Figma plugin QA scripts.
+
+## Command Execution Checklist
+
+Run all checks locally before merging:
+
+```bash
+# Run the Jest unit/integration test suites
+npm test
+
+# Verify global lint checks
+npm run lint
+
+# Verify type correctness
+npm run typecheck
+
+# Verify Prettier formats
+npm run format:check
+```

@@ -163,3 +163,33 @@ export interface ValidationResult {
   valid: boolean;
   messages: ValidationMessage[];
 }
+
+export interface UserStory {
+  title: string;
+  description: string;
+  acceptanceCriteria: string[];
+}
+
+export interface BlueprintProperty {
+  name: string;
+  type: string;
+  defaultValue?: string;
+  isApi: boolean;
+  description?: string;
+}
+
+export interface BlueprintEventHandler {
+  name: string;
+  domEvent: string;
+  targetNodeId: string;
+  actionKind: 'toast' | 'wire' | 'custom' | 'inputBinding';
+  actionDetails?: Record<string, string>;
+}
+
+export interface FeatureBlueprint {
+  componentName: string;
+  properties: BlueprintProperty[];
+  eventHandlers: BlueprintEventHandler[];
+  imports: string[];
+  warnings: string[];
+}

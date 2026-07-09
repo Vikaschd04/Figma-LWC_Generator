@@ -44,6 +44,26 @@ describe('backend API', () => {
     );
   });
 
+  it('generates LWC files with functional bindings when userStory is provided', async () => {
+    const response = await request(createBackendApp())
+      .post('/api/generate-lwc')
+      .send({
+        componentName: 'Account Health Card',
+        rawFigmaNode: accountHealthCardRawFixture,
+        userStory: {
+          title: 'Display Success Notification',
+          description: 'A toast notification should appear when clicking the View Details button.',
+          acceptanceCriteria: ['Must alert success notification']
+        }
+      })
+      .expect(200);
+
+    expect(response.body.summary.fileCount).toBe(5);
+    const jsFile = response.body.files.find((f: { path: string }) => f.path.endsWith('.js'));
+    expect(jsFile.content).toContain('ShowToastEvent');
+    expect(jsFile.content).toContain('handleViewDetailsButtonClick');
+  });
+
   it('returns useful validation errors for bad requests', async () => {
     const response = await request(createBackendApp())
       .post('/api/generate-lwc')

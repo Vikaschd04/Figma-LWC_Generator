@@ -2,9 +2,9 @@
 
 ## Extracted Data
 
-Extraction logic is not implemented yet. Phase 1 defines the raw payload shape future extraction must produce: hierarchy, node IDs, node names, node types, dimensions, coordinates, layout mode, spacing, padding, text, fills, strokes, stroke weight, radius, and selected text style properties.
+The extraction logic is implemented in the Figma Plugin (`apps/figma-plugin/src/code.ts`). It registers a recursive selected frame selection listener on the Figma editor canvas, extracting geometry boundaries, dimensions, Auto Layout attributes, visible solid paint channels, text strings, and border values into structured, Zod-valid design JSON.
 
-Phase 2 adds normalization for this raw shape. The normalizer consumes the raw payload and produces a stable intermediate design tree with only the fields downstream classifiers and generators should need.
+Phase 2 adds normalization for this raw shape. The normalizer consumes the raw payload and produces a stable intermediate design tree with only the fields downstream classifiers and generators need.
 
 ## Supported Figma Node Types
 

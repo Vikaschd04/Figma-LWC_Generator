@@ -1,0 +1,42 @@
+{
+  "name": "figma-to-lwc-vscode",
+  "displayName": "Figma to Salesforce LWC Generator",
+  "description": "Generate standard Salesforce Lightning Web Components and SLDS layouts from Figma JSON.",
+  "version": "0.1.0",
+  "publisher": "SalesforceLwcAccelerator",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "commands": [
+      {
+        "command": "figma-to-lwc.generate",
+        "title": "Figma to LWC: Generate Component from JSON"
+      }
+    ],
+    "menus": {
+      "explorer/context": [
+        {
+          "command": "figma-to-lwc.generate",
+          "group": "navigation",
+          "when": "explorerResourceIsFolder"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "esbuild src/extension.ts --bundle --outfile=dist/extension.js --external:vscode --format=cjs --platform=node",
+    "watch": "npm run compile -- --watch",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "esbuild": "^0.25.0"
+  }
+}

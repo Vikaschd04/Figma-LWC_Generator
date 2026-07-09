@@ -13,6 +13,6 @@
     "outDir": "dist",
     "types": ["jest", "node"]
   },
-  "include": ["packages/**/*.ts", "apps/**/*.ts"],
+  "include": ["packages/**/*.ts", "apps/**/*.ts", "scripts/**/*.ts", "api/**/*.ts"],
   "exclude": ["dist", "node_modules"]
 }

@@ -194,6 +194,36 @@ export const validationResultSchema = z.object({
   messages: z.array(validationMessageSchema)
 });
 
+export const userStorySchema = z.object({
+  title: z.string().min(1),
+  description: z.string().min(1),
+  acceptanceCriteria: z.array(z.string())
+});
+
+export const blueprintPropertySchema = z.object({
+  name: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
+  type: z.string().min(1),
+  defaultValue: z.string().optional(),
+  isApi: z.boolean(),
+  description: z.string().optional()
+});
+
+export const blueprintEventHandlerSchema = z.object({
+  name: z.string().regex(/^[a-zA-Z_][a-zA-Z0-9_]*$/),
+  domEvent: z.string().min(1),
+  targetNodeId: z.string().min(1),
+  actionKind: z.enum(['toast', 'wire', 'custom', 'inputBinding']),
+  actionDetails: z.record(z.string(), z.string()).optional()
+});
+
+export const featureBlueprintSchema = z.object({
+  componentName: z.string().regex(/^[a-z][a-zA-Z0-9]*$/),
+  properties: z.array(blueprintPropertySchema),
+  eventHandlers: z.array(blueprintEventHandlerSchema),
+  imports: z.array(z.string()),
+  warnings: z.array(z.string())
+});
+
 export function validateRawFigmaNode(input: unknown) {
   return rawFigmaNodeSchema.safeParse(input);
 }
@@ -204,4 +234,12 @@ export function validateNormalizedDesignNode(input: unknown) {
 
 export function validateGeneratedFile(input: unknown) {
   return generatedFileSchema.safeParse(input);
+}
+
+export function validateUserStory(input: unknown) {
+  return userStorySchema.safeParse(input);
+}
+
+export function validateFeatureBlueprint(input: unknown) {
+  return featureBlueprintSchema.safeParse(input);
 }

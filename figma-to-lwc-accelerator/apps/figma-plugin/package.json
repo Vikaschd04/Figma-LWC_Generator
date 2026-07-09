@@ -1,0 +1,12 @@
+{
+  "name": "figma-to-lwc-plugin",
+  "version": "0.1.0",
+  "description": "Figma plugin for generating and previewing Salesforce LWC code from components.",
+  "scripts": {
+    "compile": "esbuild src/code.ts --bundle --outfile=dist/code.js && node -e \"const fs = require('fs'); fs.mkdirSync('dist', { recursive: true }); fs.copyFileSync('src/ui.html', 'dist/ui.html');\""
+  },
+  "devDependencies": {
+    "@figma/plugin-typings": "^1.93.0",
+    "esbuild": "^0.25.0"
+  }
+}

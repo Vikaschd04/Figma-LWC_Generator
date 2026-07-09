@@ -1,12 +1,18 @@
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express';
 import { z } from 'zod';
-import { classifyDesignNode, normalizeFigmaTree } from '../../../packages/core/src';
+import {
+  classifyDesignNode,
+  normalizeFigmaTree,
+  compileFeatureBlueprint,
+  validateLwcBundle
+} from '../../../packages/core/src';
 import { generateLwcBundle } from '../../../packages/lwc-generator/src';
 import { mapToSlds } from '../../../packages/slds-mapper/src';
 import {
   type GeneratedLwcBundle,
   type NormalizedDesignNode,
-  rawFigmaNodeSchema
+  rawFigmaNodeSchema,
+  userStorySchema
 } from '../../../packages/schemas/src';
 
 const generationOptionsSchema = z
@@ -26,7 +32,8 @@ const normalizeRequestSchema = z.object({
 const generateRequestSchema = z.object({
   componentName: z.string().min(1),
   rawFigmaNode: rawFigmaNodeSchema,
-  options: generationOptionsSchema
+  options: generationOptionsSchema,
+  userStory: userStorySchema.optional()
 });
 
 export interface BackendDependencies {
@@ -41,10 +48,15 @@ const defaultDependencies: BackendDependencies = {
     const classified = classifyDesignNode(normalized);
     const mapped = mapToSlds(classified);
 
+    const blueprint = request.userStory
+      ? compileFeatureBlueprint(classified, request.userStory)
+      : undefined;
+
     return generateLwcBundle({
       componentName: request.componentName,
       mappedRoot: mapped,
-      options: request.options
+      options: request.options,
+      blueprint
     });
   }
 };
@@ -52,6 +64,18 @@ const defaultDependencies: BackendDependencies = {
 export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
   const dependencies = { ...defaultDependencies, ...overrides };
   const app = express();
+
+  app.use((req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, PATCH, DELETE');
+    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    if (req.method === 'OPTIONS') {
+      res.sendStatus(200);
+      return;
+    }
+    next();
+  });
 
   app.use(express.json({ limit: '1mb' }));
 
@@ -88,6 +112,11 @@ export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
 
       const bundle = dependencies.generateBundle(parsed.data);
 
+      const normalized = normalizeFigmaTree(parsed.data.rawFigmaNode);
+      const classified = classifyDesignNode(normalized);
+      const mapped = mapToSlds(classified);
+      const validation = validateLwcBundle(bundle, mapped);
+
       response.json({
         componentName: bundle.componentName,
         files: bundle.files,
@@ -95,7 +124,8 @@ export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
         summary: {
           fileCount: bundle.files.length,
           warningCount: bundle.warnings.length
-        }
+        },
+        validation
       });
     })
   );

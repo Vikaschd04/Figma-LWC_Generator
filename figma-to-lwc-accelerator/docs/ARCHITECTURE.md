@@ -59,7 +59,7 @@ The normalizer does not classify UI intent such as button, card, badge, heading,
 
 Normalized nodes are classified with `ComponentClassification`, then mapped to Salesforce-safe rendering primitives with `SldsMappedNode`.
 
-The Phase 4 mapper:
+The mapper:
 
 - Converts buttons, inputs, and icons to Lightning base component targets.
 - Converts cards, headings, body text, badges, images, containers, and layouts to semantic HTML plus SLDS classes.
@@ -67,31 +67,56 @@ The Phase 4 mapper:
 - Emits scoped CSS declarations for column flex layouts and custom gaps.
 - Carries classification warnings forward and adds mapping warnings for unsupported nodes or custom CSS needs.
 
-Future phases will generate `GeneratedFile` outputs from the mapped tree and report warnings where a design cannot be represented cleanly with SLDS or Lightning base components.
+## LWC Code Generation Pipeline (Phase 5 & Phase 9)
 
-Phase 5 adds `generateLwcBundle(input)`, which converts a mapped tree into a `GeneratedLwcBundle`.
+`generateLwcBundle(input)` converts a mapped tree and an optional `FeatureBlueprint` into a `GeneratedLwcBundle`.
 
 The generator:
 
 - Normalizes the requested component name to camelCase.
 - Creates `.html`, `.js`, `.css`, `.js-meta.xml`, and optional `README.md` files.
 - Renders Lightning base components and semantic HTML from mapped nodes.
+- Binds event attributes (`onclick`, `onchange`) and values (`value={field}`) from the compiled blueprint.
 - Emits scoped CSS only from mapped CSS declarations.
-- Emits `@api recordId` only for record page targets.
+- Emits imports (`ShowToastEvent`, server action methods), reactive track variables, and handler methods in the JS controller.
 - Carries warnings into the generated component README.
 
-The generator does not invent Apex imports, Salesforce fields, object metadata, or business behavior.
+The generator does not invent Apex imports, Salesforce fields, object metadata, or business behavior unless explicitly mapped by the blueprint.
 
-## VS Code Extension Flow
+## VS Code Extension Flow (Phase 7)
 
-Future phases will add commands for importing JSON, previewing generated LWC files, choosing a component name and output folder, preventing accidental overwrites, and writing files into a Salesforce DX project.
+The VS Code extension provides commands for importing raw design JSON:
 
-## Backend API Flow
+- Paste JSON directly from the clipboard or choose a JSON file from the workspace.
+- Input component name (validated as camelCase) and target layout context.
+- Automatically resolves target output folders in Salesforce DX projects by detecting `sfdx-project.json`.
+- Alerts the developer with warnings/confirmation dialogs on potential file overwrites.
+- Invokes validation checks and shows validation warnings in the output channel.
+- Opens generated files sequentially (README first, then JS, HTML, CSS) for immediate developer review.
 
-Phase 6 exposes health, normalization, and LWC generation endpoints with request validation, safe error handling, and structured generation summaries.
+## Figma Plugin Flow (Phase 8)
+
+The Figma plugin runs within the editor context to bridge UX design and Salesforce DX:
+
+- Subscribes to canvas selection events recursively.
+- Serializes frames, Auto Layout configurations, typography, fills, and borders into clean `RawFigmaNode` structures.
+- Presents a tabbed UI (dashboard/code preview tabs) utilizing SLDS design patterns.
+- Allows input of product User Stories.
+- Performs backend calls to compile blueprints and display tabbed file previews of the target HTML, JS, CSS, and metadata XML inside Figma.
+
+## Quality & Accessibility Validation Pipeline (Phase 10)
+
+`validateLwcBundle(bundle, mappedRoot)` runs quality checks on the generated code and tree:
+
+- **Accessibility**: Verifies that input components have valid labels, buttons have descriptive text, icons have `alternativeText`, and images have `alt` descriptors.
+- **Inline Style Check**: Disallows direct style assignments on design tags, enforcing clean SLDS/CSS stylesheets.
+- **Import Check**: Verifies that `@api` or `@wire` decorators in JS have matching imports.
+- **Record Page Context**: Warns if targeting a Record Page but lacking the `@api recordId` parameter.
+
+## Backend API Flow (Phase 6)
+
+Exposes health, normalization, and LWC generation endpoints with Zod validations, safe error handling, and validation reports.
 
 - `GET /health` returns `{ "status": "ok" }`.
 - `POST /api/normalize` accepts `{ "rawFigmaNode": ... }` and returns a normalized design tree.
-- `POST /api/generate-lwc` accepts `componentName`, `rawFigmaNode`, and options, then returns generated files, warnings, and summary counts.
-
-The backend orchestrates shared package logic only; normalization, classification, mapping, and generation remain in reusable packages.
+- `POST /api/generate-lwc` accepts `componentName`, `rawFigmaNode`, and options, returning generated files, warnings, and validation reports.

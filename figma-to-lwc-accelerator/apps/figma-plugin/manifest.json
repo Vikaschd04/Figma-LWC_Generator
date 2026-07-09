@@ -1,0 +1,12 @@
+{
+  "name": "Figma to Salesforce LWC Generator",
+  "id": "figma-to-lwc-generator-plugin",
+  "api": "1.0.0",
+  "main": "dist/code.js",
+  "ui": "dist/ui.html",
+  "editorType": ["figma"],
+  "networkAccess": {
+    "reasoning": "This plugin calls the serverless backend generation service to compile selected design nodes into Salesforce components.",
+    "allowedDomains": ["https://figma-to-lwc-accelerator.vercel.app"]
+  }
+}

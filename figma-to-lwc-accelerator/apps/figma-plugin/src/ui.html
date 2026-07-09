@@ -1,0 +1,727 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Salesforce LWC Accelerator</title>
+    <style>
+      :root {
+        --slds-color-brand: #0176d3;
+        --slds-color-brand-hover: #014486;
+        --slds-color-background: #f3f3f3;
+        --slds-color-card-bg: #ffffff;
+        --slds-color-text: #181818;
+        --slds-color-text-weak: #444444;
+        --slds-color-border: #c9c9c9;
+        --slds-color-success: #2e7d32;
+        --slds-color-error: #ea001e;
+        --slds-color-warning: #fe9339;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+        color: var(--slds-color-text);
+        background-color: var(--slds-color-background);
+        margin: 0;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 32px);
+        box-sizing: border-box;
+      }
+
+      /* Header Styling */
+      .header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid var(--slds-color-border);
+      }
+
+      .header-logo {
+        width: 24px;
+        height: 24px;
+        background-color: var(--slds-color-brand);
+        border-radius: 4px;
+        margin-right: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        font-size: 14px;
+      }
+
+      .header-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--slds-color-brand);
+        margin: 0;
+      }
+
+      /* Selection Card */
+      .selection-card {
+        background: var(--slds-color-card-bg);
+        border: 1px solid var(--slds-color-border);
+        border-radius: 4px;
+        padding: 12px;
+        margin-bottom: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      }
+
+      .selection-title {
+        font-weight: 600;
+        margin: 0 0 6px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .badge {
+        font-size: 10px;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+      }
+
+      .badge-active {
+        background-color: #e0f2fe;
+        color: #0369a1;
+      }
+
+      .badge-empty {
+        background-color: #f1f5f9;
+        color: #475569;
+      }
+
+      .selection-details {
+        font-size: 11px;
+        color: var(--slds-color-text-weak);
+        margin: 0;
+      }
+
+      /* Tabs Styling */
+      .tabs {
+        display: flex;
+        border-bottom: 1px solid var(--slds-color-border);
+        margin-bottom: 12px;
+      }
+
+      .tab {
+        padding: 8px 16px;
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--slds-color-text-weak);
+        border-bottom: 3px solid transparent;
+        margin-right: 8px;
+        transition: all 0.2s;
+      }
+
+      .tab:hover {
+        color: var(--slds-color-text);
+      }
+
+      .tab.active {
+        color: var(--slds-color-brand);
+        border-bottom-color: var(--slds-color-brand);
+      }
+
+      /* Tab Content panel */
+      .tab-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .panel {
+        display: none;
+        flex-direction: column;
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .panel.active {
+        display: flex;
+      }
+
+      /* Code & JSON Display */
+      .code-container {
+        position: relative;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-bottom: 12px;
+        overflow: hidden;
+      }
+
+      textarea.code-box {
+        width: 100%;
+        flex: 1;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        padding: 10px;
+        border: 1px solid var(--slds-color-border);
+        border-radius: 4px;
+        resize: none;
+        box-sizing: border-box;
+        background-color: #fafafa;
+        color: #333;
+        overflow-y: auto;
+      }
+
+      /* Inputs/Fields */
+      .form-group {
+        margin-bottom: 12px;
+      }
+
+      .form-group label {
+        display: block;
+        font-weight: 600;
+        font-size: 11px;
+        margin-bottom: 4px;
+        color: var(--slds-color-text-weak);
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 6px 8px;
+        font-size: 12px;
+        border: 1px solid var(--slds-color-border);
+        border-radius: 4px;
+        box-sizing: border-box;
+      }
+
+      .form-row {
+        display: flex;
+        gap: 12px;
+      }
+
+      .form-row .form-group {
+        flex: 1;
+      }
+
+      /* Buttons */
+      .btn {
+        background-color: var(--slds-color-brand);
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        font-size: 12px;
+        font-weight: 600;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn:hover {
+        background-color: var(--slds-color-brand-hover);
+      }
+
+      .btn:disabled {
+        background-color: var(--slds-color-border);
+        cursor: not-allowed;
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: var(--slds-color-brand);
+        border: 1px solid var(--slds-color-brand);
+        margin-right: 8px;
+      }
+
+      .btn-secondary:hover {
+        background-color: rgba(1, 118, 211, 0.05);
+      }
+
+      .button-group {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 8px;
+      }
+
+      /* File Sub-Tabs for Generated Code */
+      .file-subtabs {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 4px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid var(--slds-color-border);
+        padding-bottom: 4px;
+      }
+
+      .subtab {
+        font-size: 11px;
+        padding: 4px 8px;
+        background-color: #e2e8f0;
+        border-radius: 4px;
+        cursor: pointer;
+        color: #475569;
+        font-weight: 500;
+      }
+
+      .subtab.active {
+        background-color: var(--slds-color-brand);
+        color: white;
+      }
+
+      /* Loader */
+      .spinner {
+        border: 3px solid rgba(0, 0, 0, 0.1);
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        border-left-color: white;
+        animation: spin 1s linear infinite;
+        margin-right: 8px;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      /* Status Notifications */
+      .alert {
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-top: 12px;
+        font-size: 11px;
+        display: none;
+      }
+
+      .alert-success {
+        background-color: #e8f5e9;
+        color: var(--slds-color-success);
+        border: 1px solid #c8e6c9;
+        display: block;
+      }
+
+      .alert-error {
+        background-color: #ffebee;
+        color: var(--slds-color-error);
+        border: 1px solid #ffcdd2;
+        display: block;
+      }
+
+      .alert-warning {
+        background-color: #fff3e0;
+        color: var(--slds-color-warning);
+        border: 1px solid #ffe0b2;
+        display: block;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div class="header-logo">⚙️</div>
+      <h1 class="header-title">Salesforce LWC Accelerator</h1>
+    </div>
+
+    <!-- Selection Status Card -->
+    <div class="selection-card">
+      <div class="selection-title">
+        <span id="node-name">No Selection</span>
+        <span id="node-badge" class="badge badge-empty">None</span>
+      </div>
+      <p class="selection-details" id="node-info">
+        Please select a component or group on the Figma canvas.
+      </p>
+    </div>
+
+    <!-- Tabs Navigation -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('json-tab')">Raw JSON</div>
+      <div class="tab" onclick="switchTab('code-tab')">Generated Code</div>
+    </div>
+
+    <!-- Tab Content Area -->
+    <div class="tab-content">
+      <!-- JSON Tab Panel -->
+      <div class="panel active" id="json-tab">
+        <div class="code-container">
+          <textarea
+            class="code-box"
+            id="json-box"
+            readonly
+            placeholder="Figma Selection JSON will be shown here..."
+          ></textarea>
+        </div>
+        <div class="button-group">
+          <button class="btn" id="copy-json-btn" disabled onclick="copyJson()">📋 Copy JSON</button>
+        </div>
+      </div>
+
+      <!-- Generated Code Tab Panel -->
+      <div class="panel" id="code-tab">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="comp-name-input">Component Name</label>
+            <input
+              type="text"
+              class="form-control"
+              id="comp-name-input"
+              placeholder="myComponent"
+              disabled
+            />
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="target-select">Target Page Type</label>
+            <select class="form-control" id="target-select" disabled>
+              <option value="lightning__RecordPage">Record Page</option>
+              <option value="lightning__AppPage">App Page</option>
+              <option value="lightning__HomePage">Home Page</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="api-version-input">API Version</label>
+            <input type="text" class="form-control" id="api-version-input" value="61.0" disabled />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top: 8px">
+          <label for="story-title-input">User Story Title</label>
+          <input
+            type="text"
+            class="form-control"
+            id="story-title-input"
+            placeholder="e.g., Register Account Form"
+            disabled
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="story-description-input">User Story Description</label>
+          <textarea
+            class="form-control"
+            id="story-description-input"
+            placeholder="As a sales rep, I want to..."
+            style="height: 50px; resize: none"
+            disabled
+          ></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="story-criteria-input">Acceptance Criteria (comma separated)</label>
+          <input
+            type="text"
+            class="form-control"
+            id="story-criteria-input"
+            placeholder="e.g., Bind input values, Display toast alert"
+            disabled
+          />
+        </div>
+
+        <div class="button-group">
+          <button class="btn" id="generate-btn" disabled onclick="generateLwc()">
+            <div class="spinner" id="btn-spinner" style="display: none"></div>
+            ⚡ Generate LWC Code
+          </button>
+        </div>
+
+        <div
+          id="generation-result"
+          style="display: none; flex-direction: column; flex: 1; overflow: hidden; margin-top: 12px"
+        >
+          <div class="file-subtabs" id="file-tabs-container">
+            <!-- File subtabs dynamically created -->
+          </div>
+          <div class="code-container">
+            <textarea class="code-box" id="preview-box" readonly></textarea>
+          </div>
+          <div class="button-group">
+            <button class="btn btn-secondary" onclick="copyPreviewCode()">📋 Copy Code</button>
+          </div>
+        </div>
+
+        <div class="alert" id="status-alert"></div>
+      </div>
+    </div>
+
+    <script>
+      let activeNode = null;
+      let generatedFiles = {};
+      let activeFileKey = '';
+
+      // Handle incoming messages from the Figma plugin backend
+      window.onmessage = (event) => {
+        const msg = event.data.pluginMessage;
+        if (!msg) return;
+
+        if (msg.type === 'selection') {
+          const node = msg.node;
+          activeNode = node;
+
+          const nodeNameEl = document.getElementById('node-name');
+          const nodeBadgeEl = document.getElementById('node-badge');
+          const nodeInfoEl = document.getElementById('node-info');
+          const jsonBoxEl = document.getElementById('json-box');
+          const copyJsonBtn = document.getElementById('copy-json-btn');
+
+          const compNameInput = document.getElementById('comp-name-input');
+          const targetSelect = document.getElementById('target-select');
+          const apiVersionInput = document.getElementById('api-version-input');
+          const generateBtn = document.getElementById('generate-btn');
+
+          if (node) {
+            nodeNameEl.innerText = node.name;
+            nodeBadgeEl.innerText = node.type;
+            nodeBadgeEl.className = 'badge badge-active';
+
+            let detailText = `Node ID: ${node.id}`;
+            if (node.width && node.height) {
+              detailText += ` • Size: ${Math.round(node.width)}x${Math.round(node.height)}`;
+            }
+            if (node.children) {
+              detailText += ` • Children: ${node.children.length}`;
+            }
+            nodeInfoEl.innerText = detailText;
+
+            const jsonText = JSON.stringify(node, null, 2);
+            jsonBoxEl.value = jsonText;
+            copyJsonBtn.disabled = false;
+
+            compNameInput.disabled = false;
+            compNameInput.value = toCamelCase(node.name);
+            targetSelect.disabled = false;
+            apiVersionInput.disabled = false;
+            document.getElementById('story-title-input').disabled = false;
+            document.getElementById('story-description-input').disabled = false;
+            document.getElementById('story-criteria-input').disabled = false;
+            generateBtn.disabled = false;
+          } else {
+            nodeNameEl.innerText = 'No Selection';
+            nodeBadgeEl.innerText = 'None';
+            nodeBadgeEl.className = 'badge badge-empty';
+            nodeInfoEl.innerText = 'Please select a component or group on the Figma canvas.';
+
+            jsonBoxEl.value = '';
+            copyJsonBtn.disabled = true;
+
+            compNameInput.disabled = true;
+            compNameInput.value = '';
+            targetSelect.disabled = true;
+            apiVersionInput.disabled = true;
+            document.getElementById('story-title-input').disabled = true;
+            document.getElementById('story-title-input').value = '';
+            document.getElementById('story-description-input').disabled = true;
+            document.getElementById('story-description-input').value = '';
+            document.getElementById('story-criteria-input').disabled = true;
+            document.getElementById('story-criteria-input').value = '';
+            generateBtn.disabled = true;
+
+            // Clear previous code previews
+            document.getElementById('generation-result').style.display = 'none';
+            hideAlert();
+          }
+        }
+      };
+
+      function switchTab(tabId) {
+        document.querySelectorAll('.tab').forEach((tab, index) => {
+          tab.classList.remove('active');
+          if ((tabId === 'json-tab' && index === 0) || (tabId === 'code-tab' && index === 1)) {
+            tab.classList.add('active');
+          }
+        });
+
+        document.querySelectorAll('.panel').forEach((panel) => {
+          panel.classList.remove('active');
+        });
+        document.getElementById(tabId).classList.add('active');
+      }
+
+      function copyJson() {
+        const jsonBox = document.getElementById('json-box');
+        try {
+          jsonBox.select();
+          document.execCommand('copy');
+          notifyFigma('Figma JSON copied to clipboard!');
+        } catch (err) {
+          alert('Failed to copy JSON: ' + err);
+        }
+      }
+
+      async function generateLwc() {
+        if (!activeNode) return;
+
+        const compName = document.getElementById('comp-name-input').value.trim();
+        if (!/^[a-z][a-zA-Z0-9]*$/.test(compName)) {
+          showAlert(
+            'Component name must be camelCase (start with lowercase letter, alphanumeric only).',
+            'error'
+          );
+          return;
+        }
+
+        const target = document.getElementById('target-select').value;
+        const apiVersion = document.getElementById('api-version-input').value.trim();
+
+        const spinner = document.getElementById('btn-spinner');
+        const generateBtn = document.getElementById('generate-btn');
+
+        spinner.style.display = 'block';
+        generateBtn.disabled = true;
+        hideAlert();
+
+        const storyTitle = document.getElementById('story-title-input').value.trim();
+        const storyDesc = document.getElementById('story-description-input').value.trim();
+        const storyCriteriaText = document.getElementById('story-criteria-input').value.trim();
+
+        let userStory = undefined;
+        if (storyTitle || storyDesc || storyCriteriaText) {
+          userStory = {
+            title: storyTitle || 'Selected Component Story',
+            description: storyDesc || '',
+            acceptanceCriteria: storyCriteriaText
+              ? storyCriteriaText
+                  .split(',')
+                  .map((s) => s.trim())
+                  .filter(Boolean)
+              : []
+          };
+        }
+
+        try {
+          const response = await fetch(
+            'https://figma-to-lwc-accelerator.vercel.app/api/generate-lwc',
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                componentName: compName,
+                rawFigmaNode: activeNode,
+                options: {
+                  target: target,
+                  apiVersion: apiVersion,
+                  generateReadme: true
+                },
+                userStory: userStory
+              })
+            }
+          );
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(errData.error || 'Server error generating code.');
+          }
+
+          const data = await response.json();
+
+          // Map files
+          generatedFiles = {};
+          data.files.forEach((file) => {
+            const ext = file.path.split('.').pop();
+            const name = file.path.split('/').pop();
+            generatedFiles[name] = file.content;
+          });
+
+          renderFileTabs();
+
+          if (data.warnings && data.warnings.length > 0) {
+            showAlert(
+              `LWC generated with ${data.warnings.length} warning(s). Check output.`,
+              'warning'
+            );
+          } else {
+            showAlert('LWC Code generated successfully!', 'success');
+          }
+
+          notifyFigma('LWC Code generated!');
+        } catch (err) {
+          showAlert(
+            `Generation failed: ${err.message}. Ensure the backend service is running and accessible.`,
+            'error'
+          );
+        } finally {
+          spinner.style.display = 'none';
+          generateBtn.disabled = false;
+        }
+      }
+
+      function renderFileTabs() {
+        const container = document.getElementById('file-tabs-container');
+        container.innerHTML = '';
+
+        const fileNames = Object.keys(generatedFiles);
+        if (fileNames.length === 0) return;
+
+        fileNames.forEach((fileName, index) => {
+          const tab = document.createElement('div');
+          tab.className = 'subtab';
+          if (index === 0) {
+            tab.classList.add('active');
+            activeFileKey = fileName;
+            updatePreviewCode(fileName);
+          }
+          tab.innerText = fileName;
+          tab.onclick = () => {
+            document.querySelectorAll('.subtab').forEach((t) => t.classList.remove('active'));
+            tab.classList.add('active');
+            activeFileKey = fileName;
+            updatePreviewCode(fileName);
+          };
+          container.appendChild(tab);
+        });
+
+        document.getElementById('generation-result').style.display = 'flex';
+      }
+
+      function updatePreviewCode(fileName) {
+        document.getElementById('preview-box').value = generatedFiles[fileName] || '';
+      }
+
+      function copyPreviewCode() {
+        const previewBox = document.getElementById('preview-box');
+        if (!previewBox.value) return;
+        try {
+          previewBox.select();
+          document.execCommand('copy');
+          notifyFigma(`${activeFileKey} code copied!`);
+        } catch (err) {
+          alert('Copy failed: ' + err);
+        }
+      }
+
+      function notifyFigma(msg) {
+        parent.postMessage({ pluginMessage: { type: 'notify', message: msg } }, '*');
+      }
+
+      function showAlert(msg, type) {
+        const alertEl = document.getElementById('status-alert');
+        alertEl.innerText = msg;
+        alertEl.className = 'alert alert-' + type;
+        alertEl.style.display = 'block';
+      }
+
+      function hideAlert() {
+        const alertEl = document.getElementById('status-alert');
+        alertEl.style.display = 'none';
+      }
+
+      function toCamelCase(str) {
+        return str
+          .replace(/[^a-zA-Z0-9]+(.)/g, (m, chr) => chr.toUpperCase())
+          .replace(/[^a-zA-Z0-9]/g, '')
+          .replace(/^(.)/, (m, chr) => chr.toLowerCase());
+      }
+    </script>
+  </body>
+</html>

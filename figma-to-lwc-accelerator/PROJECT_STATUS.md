@@ -2,7 +2,7 @@
 
 ## Current Phase
 
-Phase 6: Build Backend API.
+Phase 12: MVP Hardening.
 
 ## Completed Phases
 
@@ -13,14 +13,14 @@ Phase 6: Build Backend API.
 - Phase 4: Build SLDS Mapping Engine.
 - Phase 5: Build LWC Code Generator.
 - Phase 6: Build Backend API.
-
-## Pending Phases
-
 - Phase 7: Build VS Code Extension MVP.
 - Phase 8: Build Figma Plugin MVP.
 - Phase 9: Add User Story Input and Feature Blueprint.
 - Phase 10: Add Validation and Quality Checks.
 - Phase 11: Add Sample Generated Components.
+
+## Pending Phases
+
 - Phase 12: MVP Hardening.
 
 ## Working Features
@@ -51,12 +51,24 @@ Phase 6: Build Backend API.
 - Generator snapshot tests cover HTML, JS, CSS, and meta XML.
 - Backend Express app exposes `GET /health`, `POST /api/normalize`, and `POST /api/generate-lwc`.
 - Backend validates requests with Zod and returns safe validation/internal error responses.
+- VS Code extension is functional under `apps/vscode-extension`.
+- VS Code extension commands support pasting Figma JSON from the clipboard or picking a file from the workspace.
+- VS Code extension automatically resolves target output folder in Salesforce DX projects (detects `sfdx-project.json`).
+- VS Code extension executes full normalizer, classifier, mapper, and generator locally and self-contained.
+- VS Code extension opens generated files in the workspace editor for developer review.
+- Figma plugin is functional under `apps/figma-plugin`.
+- Figma plugin extracts selected frames recursively, serializing them into raw design JSON.
+- Figma plugin UI renders a Salesforce-themed dashboard for copying JSON or calling the LWC generation API.
+- Figma plugin UI provides built-in tabbed previewing for generated LWC HTML, JS, CSS, Meta-XML, and README files.
+- Blueprint Compiler compiles User Story context (keywords like toast, Apex, recordId) and maps them to functional event bindings.
+- LWC Generator supports Feature Blueprint, dynamically injecting state variables, change handlers, toast actions, and base component bindings.
+- Quality Validation engine parses accessibility rules and reports styling warnings before output.
+- Automated code generation script (`scripts/generate-samples.ts`) compiles LWC component samples directly using pipeline modules.
+- Vercel Serverless deployment files (`api/index.ts`, `vercel.json`) are configured to support instant cloud hosting.
 
 ## Broken Or Incomplete Features
 
-- Product behavior has not started yet.
-- VS Code extension and Figma plugin are still pending.
-- Application package directories are still placeholders.
+- Integration testing on real Salesforce Org pages is pending.
 
 ## Important Technical Decisions
 
