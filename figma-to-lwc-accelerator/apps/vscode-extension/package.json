@@ -3,7 +3,7 @@
   "displayName": "Figma to Salesforce LWC Generator",
   "description": "Generate standard Salesforce Lightning Web Components and SLDS layouts from Figma JSON.",
   "version": "0.1.0",
-  "publisher": "SalesforceLwcAccelerator",
+  "publisher": "iamvikaas",
   "engines": {
     "vscode": "^1.90.0"
   },
@@ -12,6 +12,11 @@
     "Other"
   ],
   "main": "./dist/extension.js",
+  "files": [
+    "dist/extension.js",
+    "package.json",
+    "README.md"
+  ],
   "activationEvents": [],
   "contributes": {
     "commands": [

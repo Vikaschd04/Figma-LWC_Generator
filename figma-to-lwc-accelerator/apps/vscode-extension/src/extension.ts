@@ -32,8 +32,15 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (inputOption.startsWith('📋')) {
           rawJsonText = await vscode.env.clipboard.readText();
-          if (!rawJsonText.trim()) {
+          const trimmed = rawJsonText.trim();
+          if (!trimmed) {
             vscode.window.showErrorMessage('Clipboard is empty. Please copy Figma JSON first.');
+            return;
+          }
+          if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
+            vscode.window.showErrorMessage(
+              'Clipboard content does not appear to be valid JSON. Please copy the raw JSON from the Figma plugin first.'
+            );
             return;
           }
         } else {
