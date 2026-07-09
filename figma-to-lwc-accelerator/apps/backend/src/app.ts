@@ -105,7 +105,7 @@ Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON
               'X-Title': 'Figma to LWC Accelerator'
             },
             body: JSON.stringify({
-              model: 'openai/gpt-oss-120b:free',
+              model: 'google/gemini-2.5-flash:free',
               messages: [
                 {
                   role: 'user',
