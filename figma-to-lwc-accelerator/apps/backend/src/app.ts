@@ -77,7 +77,7 @@ export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
     next();
   });
 
-  app.use(express.json({ limit: '1mb' }));
+  app.use(express.json({ limit: '10mb' }));
 
   app.get('/health', (_request, response) => {
     response.json({ status: 'ok' });
@@ -151,10 +151,11 @@ function toValidationError(error: z.ZodError) {
   };
 }
 
-const errorHandler: ErrorRequestHandler = (_error, _request, response, next) => {
+const errorHandler: ErrorRequestHandler = (error, _request, response, next) => {
   void next;
-
+  console.error('Unhandled Server Error:', error);
   response.status(500).json({
-    error: 'Internal server error'
+    error: 'Internal server error',
+    message: error instanceof Error ? error.message : String(error)
   });
 };

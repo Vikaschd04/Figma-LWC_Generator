@@ -45,12 +45,12 @@ export const rawFigmaNodeSchema: z.ZodType<{
   x?: number;
   y?: number;
   layoutMode?: z.infer<typeof figmaLayoutModeSchema>;
-  primaryAxisAlignItems?: z.infer<typeof figmaAxisAlignSchema>;
-  counterAxisAlignItems?: z.infer<typeof figmaAxisAlignSchema>;
+  primaryAxisAlignItems?: string;
+  counterAxisAlignItems?: string;
   layoutAlign?: string;
   layoutGrow?: number;
-  primaryAxisSizingMode?: z.infer<typeof figmaSizingModeSchema>;
-  counterAxisSizingMode?: z.infer<typeof figmaSizingModeSchema>;
+  primaryAxisSizingMode?: string;
+  counterAxisSizingMode?: string;
   itemSpacing?: number;
   paddingTop?: number;
   paddingRight?: number;
@@ -63,7 +63,7 @@ export const rawFigmaNodeSchema: z.ZodType<{
   strokes?: z.infer<typeof rawFigmaPaintSchema>[];
   strokeWeight?: number;
   style?: z.infer<typeof rawFigmaTextStyleSchema>;
-  textAlignHorizontal?: z.infer<typeof figmaTextAlignSchema>;
+  textAlignHorizontal?: string;
   children?: z.infer<typeof rawFigmaNodeSchema>[];
 }> = z.lazy(() =>
   z.object({
@@ -75,12 +75,12 @@ export const rawFigmaNodeSchema: z.ZodType<{
     x: z.number().optional(),
     y: z.number().optional(),
     layoutMode: figmaLayoutModeSchema.optional(),
-    primaryAxisAlignItems: figmaAxisAlignSchema.optional(),
-    counterAxisAlignItems: figmaAxisAlignSchema.optional(),
+    primaryAxisAlignItems: z.string().optional(),
+    counterAxisAlignItems: z.string().optional(),
     layoutAlign: z.string().optional(),
     layoutGrow: z.number().optional(),
-    primaryAxisSizingMode: figmaSizingModeSchema.optional(),
-    counterAxisSizingMode: figmaSizingModeSchema.optional(),
+    primaryAxisSizingMode: z.string().optional(),
+    counterAxisSizingMode: z.string().optional(),
     itemSpacing: z.number().nonnegative().optional(),
     paddingTop: z.number().nonnegative().optional(),
     paddingRight: z.number().nonnegative().optional(),
@@ -93,7 +93,7 @@ export const rawFigmaNodeSchema: z.ZodType<{
     strokes: z.array(rawFigmaPaintSchema).optional(),
     strokeWeight: z.number().nonnegative().optional(),
     style: rawFigmaTextStyleSchema.optional(),
-    textAlignHorizontal: figmaTextAlignSchema.optional(),
+    textAlignHorizontal: z.string().optional(),
     children: z.array(rawFigmaNodeSchema).optional()
   })
 );

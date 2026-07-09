@@ -89,6 +89,9 @@ describe('backend API', () => {
       })
       .expect(500);
 
-    expect(response.body).toEqual({ error: 'Internal server error' });
+    expect(response.body).toEqual({
+      error: 'Internal server error',
+      message: 'simulated failure'
+    });
   });
 });

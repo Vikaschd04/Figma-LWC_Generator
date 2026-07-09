@@ -39,12 +39,12 @@ export interface RawFigmaNode {
   x?: number;
   y?: number;
   layoutMode?: FigmaLayoutMode;
-  primaryAxisAlignItems?: FigmaAxisAlign;
-  counterAxisAlignItems?: FigmaAxisAlign;
+  primaryAxisAlignItems?: string;
+  counterAxisAlignItems?: string;
   layoutAlign?: string;
   layoutGrow?: number;
-  primaryAxisSizingMode?: FigmaSizingMode;
-  counterAxisSizingMode?: FigmaSizingMode;
+  primaryAxisSizingMode?: string;
+  counterAxisSizingMode?: string;
   itemSpacing?: number;
   paddingTop?: number;
   paddingRight?: number;
@@ -57,7 +57,7 @@ export interface RawFigmaNode {
   strokes?: RawFigmaPaint[];
   strokeWeight?: number;
   style?: RawFigmaTextStyle;
-  textAlignHorizontal?: FigmaTextAlign;
+  textAlignHorizontal?: string;
   children?: RawFigmaNode[];
 }
 
