@@ -427,6 +427,11 @@
           />
         </div>
 
+        <div class="form-group" style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
+          <input type="checkbox" id="vision-ai-toggle" style="cursor: pointer; width: auto;" disabled />
+          <label for="vision-ai-toggle" style="margin-bottom: 0; cursor: pointer; font-weight: 600;">⚡ Use Multimodal Vision AI (Gemini)</label>
+        </div>
+
         <div class="button-group">
           <button class="btn" id="generate-btn" disabled onclick="generateLwc()">
             <div class="spinner" id="btn-spinner" style="display: none"></div>
@@ -455,6 +460,7 @@
 
     <script>
       let activeNode = null;
+      let activeImageBase64 = null;
       let generatedFiles = {};
       let activeFileKey = '';
 
@@ -467,6 +473,12 @@
           const node = msg.node;
           activeNode = node;
 
+          if (msg.imageBytes) {
+            activeImageBase64 = arrayBufferToBase64(msg.imageBytes);
+          } else {
+            activeImageBase64 = null;
+          }
+
           const nodeNameEl = document.getElementById('node-name');
           const nodeBadgeEl = document.getElementById('node-badge');
           const nodeInfoEl = document.getElementById('node-info');
@@ -477,6 +489,7 @@
           const targetSelect = document.getElementById('target-select');
           const apiVersionInput = document.getElementById('api-version-input');
           const generateBtn = document.getElementById('generate-btn');
+          const visionAiToggle = document.getElementById('vision-ai-toggle');
 
           if (node) {
             nodeNameEl.innerText = node.name;
@@ -503,6 +516,7 @@
             document.getElementById('story-title-input').disabled = false;
             document.getElementById('story-description-input').disabled = false;
             document.getElementById('story-criteria-input').disabled = false;
+            visionAiToggle.disabled = false;
             generateBtn.disabled = false;
           } else {
             nodeNameEl.innerText = 'No Selection';
@@ -523,6 +537,8 @@
             document.getElementById('story-description-input').value = '';
             document.getElementById('story-criteria-input').disabled = true;
             document.getElementById('story-criteria-input').value = '';
+            visionAiToggle.disabled = true;
+            visionAiToggle.checked = false;
             generateBtn.disabled = true;
 
             // Clear previous code previews
@@ -531,6 +547,16 @@
           }
         }
       };
+
+      function arrayBufferToBase64(buffer) {
+        let binary = '';
+        const bytes = new Uint8Array(buffer);
+        const len = bytes.byteLength;
+        for (let i = 0; i < len; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
+        return window.btoa(binary);
+      }
 
       function switchTab(tabId) {
         document.querySelectorAll('.tab').forEach((tab, index) => {
@@ -571,6 +597,12 @@
 
         const target = document.getElementById('target-select').value;
         const apiVersion = document.getElementById('api-version-input').value.trim();
+        const visionAi = document.getElementById('vision-ai-toggle').checked;
+
+        if (visionAi && !activeImageBase64) {
+          showAlert('Failed to capture high-res frame image. Please try selecting the frame again.', 'error');
+          return;
+        }
 
         const spinner = document.getElementById('btn-spinner');
         const generateBtn = document.getElementById('generate-btn');
@@ -607,7 +639,8 @@
               },
               body: JSON.stringify({
                 componentName: compName,
-                rawFigmaNode: activeNode,
+                rawFigmaNode: visionAi ? undefined : activeNode,
+                imageBase64: visionAi ? activeImageBase64 : undefined,
                 options: {
                   target: target,
                   apiVersion: apiVersion,
@@ -620,7 +653,7 @@
 
           if (!response.ok) {
             const errData = await response.json();
-            throw new Error(errData.error || 'Server error generating code.');
+            throw new Error(errData.message || errData.error || 'Server error generating code.');
           }
 
           const data = await response.json();

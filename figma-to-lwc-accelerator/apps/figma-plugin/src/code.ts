@@ -2,17 +2,27 @@
 
 figma.showUI(__html__, { width: 500, height: 650 });
 
-function sendSelection() {
+async function sendSelection() {
   const selection = figma.currentPage.selection;
 
   if (selection.length === 0) {
-    figma.ui.postMessage({ type: 'selection', node: null });
+    figma.ui.postMessage({ type: 'selection', node: null, imageBytes: null });
     return;
   }
 
   const rootNode = selection[0];
   const serialized = serializeNode(rootNode);
-  figma.ui.postMessage({ type: 'selection', node: serialized });
+
+  try {
+    const bytes = await rootNode.exportAsync({
+      format: 'PNG',
+      constraint: { type: 'SCALE', value: 2 }
+    });
+    figma.ui.postMessage({ type: 'selection', node: serialized, imageBytes: bytes });
+  } catch (err) {
+    console.error('Failed to export selection image:', err);
+    figma.ui.postMessage({ type: 'selection', node: serialized, imageBytes: null });
+  }
 }
 
 // Send initial selection on load
