@@ -1,5 +1,4 @@
 import request from 'supertest';
-import { accountHealthCardRawFixture } from '../../../../packages/test-fixtures/src';
 import { createBackendApp } from '../app';
 
 describe('backend API', () => {
@@ -7,91 +6,32 @@ describe('backend API', () => {
     await request(createBackendApp()).get('/health').expect(200, { status: 'ok' });
   });
 
-  it('normalizes raw Figma JSON', async () => {
-    const response = await request(createBackendApp())
-      .post('/api/normalize')
-      .send({ rawFigmaNode: accountHealthCardRawFixture })
-      .expect(200);
-
-    expect(response.body.normalizedDesign).toMatchObject({
-      name: 'Account Health Card',
-      semanticType: 'container'
-    });
-  });
-
-  it('generates LWC files', async () => {
+  it('returns useful validation errors for missing imageBase64', async () => {
     const response = await request(createBackendApp())
       .post('/api/generate-lwc')
-      .send({
-        componentName: 'Account Health Card',
-        rawFigmaNode: accountHealthCardRawFixture,
-        options: {
-          target: 'lightning__RecordPage',
-          generateReadme: true
-        }
-      })
-      .expect(200);
-
-    expect(response.body).toMatchObject({
-      componentName: 'accountHealthCard',
-      summary: {
-        fileCount: 5,
-        warningCount: 5
-      }
-    });
-    expect(response.body.files.map((file: { path: string }) => file.path)).toContain(
-      'accountHealthCard/accountHealthCard.html'
-    );
-  });
-
-  it('generates LWC files with functional bindings when userStory is provided', async () => {
-    const response = await request(createBackendApp())
-      .post('/api/generate-lwc')
-      .send({
-        componentName: 'Account Health Card',
-        rawFigmaNode: accountHealthCardRawFixture,
-        userStory: {
-          title: 'Display Success Notification',
-          description: 'A toast notification should appear when clicking the View Details button.',
-          acceptanceCriteria: ['Must alert success notification']
-        }
-      })
-      .expect(200);
-
-    expect(response.body.summary.fileCount).toBe(5);
-    const jsFile = response.body.files.find((f: { path: string }) => f.path.endsWith('.js'));
-    expect(jsFile.content).toContain('ShowToastEvent');
-    expect(jsFile.content).toContain('handleViewDetailsButtonClick');
-  });
-
-  it('returns useful validation errors for bad requests', async () => {
-    const response = await request(createBackendApp())
-      .post('/api/generate-lwc')
-      .send({ componentName: '' })
+      .send({ componentName: 'testComponent' })
       .expect(400);
 
     expect(response.body.error).toBe('Invalid request');
     expect(response.body.issues.length).toBeGreaterThan(0);
   });
 
-  it('handles internal errors safely', async () => {
-    const response = await request(
-      createBackendApp({
-        generateBundle: () => {
-          throw new Error('simulated failure');
-        }
-      })
-    )
-      .post('/api/generate-lwc')
-      .send({
-        componentName: 'Account Health Card',
-        rawFigmaNode: accountHealthCardRawFixture
-      })
-      .expect(500);
+  it('handles missing API keys gracefully', async () => {
+    const originalKey = process.env.OPENROUTER_API_KEY;
+    delete process.env.OPENROUTER_API_KEY;
 
-    expect(response.body).toEqual({
-      error: 'Internal server error',
-      message: 'simulated failure'
-    });
+    try {
+      const response = await request(createBackendApp())
+        .post('/api/generate-lwc')
+        .send({
+          componentName: 'testComponent',
+          imageBase64: 'mockBase64String'
+        })
+        .expect(500);
+
+      expect(response.body.error).toBe('OpenRouter API key is not configured.');
+    } finally {
+      process.env.OPENROUTER_API_KEY = originalKey;
+    }
   });
 });

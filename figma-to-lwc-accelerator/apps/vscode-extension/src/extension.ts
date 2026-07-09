@@ -1,14 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import {
-  classifyDesignNode,
-  normalizeFigmaTree,
-  validateLwcBundle
-} from '../../../packages/core/src';
-import { generateLwcBundle } from '../../../packages/lwc-generator/src';
-import { mapToSlds } from '../../../packages/slds-mapper/src';
-import { rawFigmaNodeSchema } from '../../../packages/schemas/src';
 
 export function activate(context: vscode.ExtensionContext) {
   const outputChannel = vscode.window.createOutputChannel('Figma to LWC');
@@ -18,73 +10,28 @@ export function activate(context: vscode.ExtensionContext) {
     'figma-to-lwc.generate',
     async (uri?: vscode.Uri) => {
       try {
-        // Step 1: Obtain Figma Node JSON input
-        const inputOption = await vscode.window.showQuickPick(
-          ['📋 Paste JSON from Clipboard', '📁 Select JSON file from workspace...'],
-          { placeHolder: 'Select the raw Figma JSON source' }
-        );
+        // Step 1: Prompt to select Figma screenshot image file
+        const fileUris = await vscode.window.showOpenDialog({
+          canSelectFiles: true,
+          canSelectFolders: false,
+          canSelectMany: false,
+          filters: { 'Image Files': ['png', 'jpg', 'jpeg', 'svg'] },
+          openLabel: 'Select Figma Design Image'
+        });
 
-        if (!inputOption) {
+        if (!fileUris || fileUris.length === 0) {
           return;
         }
 
-        let rawJsonText = '';
+        const imagePath = fileUris[0].fsPath;
+        outputChannel.clear();
+        outputChannel.appendLine(`Loading image file: ${imagePath}`);
 
-        if (inputOption.startsWith('📋')) {
-          rawJsonText = await vscode.env.clipboard.readText();
-          const trimmed = rawJsonText.trim();
-          if (!trimmed) {
-            vscode.window.showErrorMessage('Clipboard is empty. Please copy Figma JSON first.');
-            return;
-          }
-          if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) {
-            vscode.window.showErrorMessage(
-              'Clipboard content does not appear to be valid JSON. Please copy the raw JSON from the Figma plugin first.'
-            );
-            return;
-          }
-        } else {
-          const fileUris = await vscode.window.showOpenDialog({
-            canSelectFiles: true,
-            canSelectFolders: false,
-            canSelectMany: false,
-            filters: { 'JSON Files': ['json'] },
-            openLabel: 'Select Figma JSON'
-          });
+        // Read and convert file to Base64
+        const imageBuffer = fs.readFileSync(imagePath);
+        const imageBase64 = imageBuffer.toString('base64');
 
-          if (!fileUris || fileUris.length === 0) {
-            return;
-          }
-
-          rawJsonText = fs.readFileSync(fileUris[0].fsPath, 'utf8');
-        }
-
-        // Step 2: Parse and Validate Figma JSON
-        let rawNode: unknown;
-        try {
-          rawNode = JSON.parse(rawJsonText);
-        } catch (e: unknown) {
-          vscode.window.showErrorMessage(
-            `Failed to parse JSON text: ${e instanceof Error ? e.message : String(e)}`
-          );
-          return;
-        }
-
-        const parseResult = rawFigmaNodeSchema.safeParse(rawNode);
-        if (!parseResult.success) {
-          outputChannel.clear();
-          outputChannel.appendLine('Figma JSON Validation Failures:');
-          parseResult.error.issues.forEach((err) => {
-            outputChannel.appendLine(`- [${err.path.join('.') || 'root'}]: ${err.message}`);
-          });
-          outputChannel.show();
-          vscode.window.showErrorMessage(
-            'Figma JSON is invalid. Review the Figma to LWC output channel for details.'
-          );
-          return;
-        }
-
-        // Step 3: Prompt for LWC Component Details
+        // Step 2: Prompt for LWC Component Details
         const componentName = await vscode.window.showInputBox({
           prompt: 'Enter LWC Component Name (camelCase)',
           placeHolder: 'accountHealthCard',
@@ -128,7 +75,34 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        // Step 4: Resolve Export Location
+        // Optional User Story inputs to inject logical controls
+        const storyTitle = await vscode.window.showInputBox({
+          prompt: 'User Story Title (Optional)',
+          placeHolder: 'e.g. Account Registration Form'
+        });
+
+        let userStory = undefined;
+        if (storyTitle) {
+          const storyDesc = await vscode.window.showInputBox({
+            prompt: 'User Story Description (Optional)',
+            placeHolder: 'e.g. Captures user details and registers an account...'
+          });
+
+          const storyCriteria = await vscode.window.showInputBox({
+            prompt: 'Acceptance Criteria (Optional, comma-separated)',
+            placeHolder: 'e.g. must validate email, must have reset button'
+          });
+
+          userStory = {
+            title: storyTitle,
+            description: storyDesc || '',
+            acceptanceCriteria: storyCriteria
+              ? storyCriteria.split(',').map((s) => s.trim()).filter(Boolean)
+              : []
+          };
+        }
+
+        // Step 3: Resolve Export Location
         let exportDir: string | undefined;
 
         if (uri && fs.statSync(uri.fsPath).isDirectory()) {
@@ -180,7 +154,7 @@ export function activate(context: vscode.ExtensionContext) {
 
         const componentFolder = path.join(exportDir, componentName);
 
-        // Step 5: Check Overwrites
+        // Step 4: Check Overwrites
         if (fs.existsSync(componentFolder)) {
           const overwriteOption = await vscode.window.showWarningMessage(
             `A component named "${componentName}" already exists. Overwrite?`,
@@ -194,29 +168,45 @@ export function activate(context: vscode.ExtensionContext) {
           }
         }
 
-        // Step 6: Generate Component Bundle
-        outputChannel.clear();
-        outputChannel.appendLine(`Starting LWC code generation for "${componentName}"...`);
+        // Step 5: Send Image Generation API request
+        outputChannel.appendLine(`Sending visual layout to Gemini Vision AI compiler...`);
+        outputChannel.show();
 
-        const normalized = normalizeFigmaTree(parseResult.data);
-        const classified = classifyDesignNode(normalized);
-        const mapped = mapToSlds(classified);
-        const bundle = generateLwcBundle({
-          componentName,
-          mappedRoot: mapped,
-          options: {
-            target: targetOption as
-              'lightning__RecordPage' | 'lightning__AppPage' | 'lightning__HomePage',
-            apiVersion,
-            generateReadme: true
+        const response = await fetch(
+          'https://figma-to-lwc-accelerator.vercel.app/api/generate-lwc',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              componentName: componentName,
+              imageBase64: imageBase64,
+              options: {
+                target: targetOption,
+                apiVersion: apiVersion,
+                generateReadme: true
+              },
+              userStory: userStory
+            })
           }
-        });
+        );
 
-        // Step 7: Write to File System
+        if (!response.ok) {
+          const errData = (await response.json()) as { message?: string; error?: string };
+          throw new Error(errData.message || errData.error || 'Server error generating LWC component.');
+        }
+
+        const data = (await response.json()) as {
+          files: Array<{ path: string; content: string }>;
+          warnings?: string[];
+        };
+
+        // Step 6: Write generated files to disk
         fs.mkdirSync(componentFolder, { recursive: true });
 
         const createdFiles: string[] = [];
-        for (const file of bundle.files) {
+        for (const file of data.files) {
           const filePath = path.join(componentFolder, path.basename(file.path));
           fs.writeFileSync(filePath, file.content, 'utf8');
           createdFiles.push(filePath);
@@ -224,53 +214,27 @@ export function activate(context: vscode.ExtensionContext) {
 
         outputChannel.appendLine(`Successfully wrote files to: ${componentFolder}`);
 
-        // Step 8: Validate Generated Component Bundle
-        const validationResult = validateLwcBundle(bundle, mapped);
-
-        if (bundle.warnings.length > 0) {
-          outputChannel.appendLine('\nMapping / Classification Warnings:');
-          bundle.warnings.forEach((warning) => {
+        if (data.warnings && data.warnings.length > 0) {
+          outputChannel.appendLine('\nVision AI Warnings:');
+          data.warnings.forEach((warning) => {
             outputChannel.appendLine(`- ${warning}`);
           });
-        }
-
-        if (validationResult.messages.length > 0) {
-          outputChannel.appendLine('\nQuality & Accessibility Validation Issues:');
-          validationResult.messages.forEach((msg) => {
-            outputChannel.appendLine(`- [${msg.severity.toUpperCase()}] ${msg.message}`);
-          });
-        }
-
-        const errors = validationResult.messages.filter((m) => m.severity === 'error');
-        const warnings = [
-          ...bundle.warnings,
-          ...validationResult.messages.filter((m) => m.severity === 'warning').map((m) => m.message)
-        ];
-
-        if (errors.length > 0) {
-          vscode.window.showErrorMessage(
-            `LWC Component generated with ${errors.length} validation error(s). Review output channel.`
-          );
-        } else if (warnings.length > 0) {
           vscode.window.showWarningMessage(
-            `LWC Component generated with ${warnings.length} warning(s). Review output channel.`
+            `LWC Component generated with warnings. Review output channel.`
           );
         } else {
           vscode.window.showInformationMessage(
-            `LWC Component "${componentName}" generated successfully with 0 warnings/errors!`
+            `LWC Component "${componentName}" generated successfully!`
           );
         }
 
-        outputChannel.show();
-
-        // Step 8: Offer to open generated files
+        // Step 7: Offer to open generated files
         const viewOption = await vscode.window.showInformationMessage(
           `Open generated files for "${componentName}"?`,
           'Open Files'
         );
 
         if (viewOption === 'Open Files') {
-          // Sort files to open README first, then js, html, css
           const extensionPriority = ['.md', '.html', '.js', '.css'];
           const sortedFiles = [...createdFiles].sort((a, b) => {
             const extA = path.extname(a);

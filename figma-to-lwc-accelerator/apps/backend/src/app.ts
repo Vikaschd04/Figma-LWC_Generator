@@ -1,69 +1,22 @@
 import express, { type ErrorRequestHandler, type RequestHandler } from 'express';
 import { z } from 'zod';
-import {
-  classifyDesignNode,
-  normalizeFigmaTree,
-  compileFeatureBlueprint,
-  validateLwcBundle
-} from '../../../packages/core/src';
-import { generateLwcBundle } from '../../../packages/lwc-generator/src';
-import { mapToSlds } from '../../../packages/slds-mapper/src';
-import {
-  type GeneratedLwcBundle,
-  type NormalizedDesignNode,
-  rawFigmaNodeSchema,
-  userStorySchema
-} from '../../../packages/schemas/src';
-
-const generationOptionsSchema = z
-  .object({
-    target: z
-      .enum(['lightning__RecordPage', 'lightning__AppPage', 'lightning__HomePage'])
-      .optional(),
-    apiVersion: z.string().min(1).optional(),
-    generateReadme: z.boolean().optional()
-  })
-  .optional();
-
-const normalizeRequestSchema = z.object({
-  rawFigmaNode: rawFigmaNodeSchema
-});
 
 const generateRequestSchema = z.object({
   componentName: z.string().min(1),
-  rawFigmaNode: rawFigmaNodeSchema.optional(),
-  imageBase64: z.string().optional(),
-  options: generationOptionsSchema,
-  userStory: userStorySchema.optional()
+  imageBase64: z.string().min(1),
+  options: z.object({
+    target: z.string().optional(),
+    apiVersion: z.string().optional(),
+    generateReadme: z.boolean().optional()
+  }).optional(),
+  userStory: z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    acceptanceCriteria: z.array(z.string()).optional()
+  }).optional()
 });
 
-export interface BackendDependencies {
-  normalizeTree: (rawNode: z.infer<typeof rawFigmaNodeSchema>) => NormalizedDesignNode;
-  generateBundle: (request: z.infer<typeof generateRequestSchema>) => GeneratedLwcBundle;
-}
-
-const defaultDependencies: BackendDependencies = {
-  normalizeTree: normalizeFigmaTree,
-  generateBundle: (request) => {
-    const normalized = normalizeFigmaTree(request.rawFigmaNode!);
-    const classified = classifyDesignNode(normalized);
-    const mapped = mapToSlds(classified);
-
-    const blueprint = request.userStory
-      ? compileFeatureBlueprint(classified, request.userStory)
-      : undefined;
-
-    return generateLwcBundle({
-      componentName: request.componentName,
-      mappedRoot: mapped,
-      options: request.options,
-      blueprint
-    });
-  }
-};
-
-export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
-  const dependencies = { ...defaultDependencies, ...overrides };
+export function createBackendApp() {
   const app = express();
 
   app.use((req, res, next) => {
@@ -85,23 +38,6 @@ export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
   });
 
   app.post(
-    '/api/normalize',
-    safeHandler((request, response) => {
-      const parsed = normalizeRequestSchema.safeParse(request.body);
-
-      if (!parsed.success) {
-        response.status(400).json(toValidationError(parsed.error));
-        return;
-      }
-
-      response.json({
-        normalizedDesign: dependencies.normalizeTree(parsed.data.rawFigmaNode),
-        warnings: []
-      });
-    })
-  );
-
-  app.post(
     '/api/generate-lwc',
     safeHandler(async (request, response) => {
       const parsed = generateRequestSchema.safeParse(request.body);
@@ -111,30 +47,28 @@ export function createBackendApp(overrides: Partial<BackendDependencies> = {}) {
         return;
       }
 
-      // 1. Check if Vision LLM (AI) generation is requested
-      if (parsed.data.imageBase64) {
-        const apiKey = process.env.OPENROUTER_API_KEY;
-        if (!apiKey) {
-          response.status(500).json({
-            error: 'OpenRouter API key is not configured.',
-            message: 'Please configure the OPENROUTER_API_KEY environment variable in your deployment.'
-          });
-          return;
-        }
-        
-        const compName = parsed.data.componentName;
-        const target = parsed.data.options?.target ?? 'lightning__RecordPage';
-        const apiVersion = parsed.data.options?.apiVersion ?? '61.0';
-        const userStory = parsed.data.userStory;
+      const apiKey = process.env.OPENROUTER_API_KEY;
+      if (!apiKey) {
+        response.status(500).json({
+          error: 'OpenRouter API key is not configured.',
+          message: 'Please configure the OPENROUTER_API_KEY environment variable in your deployment.'
+        });
+        return;
+      }
 
-        const userStoryPrompt = userStory
-          ? `Functional requirement details:
+      const compName = parsed.data.componentName;
+      const target = parsed.data.options?.target ?? 'lightning__RecordPage';
+      const apiVersion = parsed.data.options?.apiVersion ?? '61.0';
+      const userStory = parsed.data.userStory;
+
+      const userStoryPrompt = userStory
+        ? `Functional requirement details:
    Title: ${userStory.title}
    Description: ${userStory.description}
-   Acceptance Criteria: ${userStory.acceptanceCriteria.join(', ')}`
-          : 'No functional requirements provided.';
+   Acceptance Criteria: ${userStory.acceptanceCriteria?.join(', ') || ''}`
+        : 'No functional requirements provided.';
 
-        const prompt = `You are an expert Salesforce UI/UX Developer. Your task is to analyze the provided Figma design screenshot and generate a production-ready, highly accurate Salesforce Lightning Web Component (LWC) matching it.
+      const prompt = `You are an expert Salesforce UI/UX Developer. Your task is to analyze the provided Figma design screenshot and generate a production-ready, highly accurate Salesforce Lightning Web Component (LWC) matching it.
 
 Guidelines:
 1. Naming: The component folder/file name must be: ${compName}. Inside the JS controller, name the class: ${compName.charAt(0).toUpperCase() + compName.slice(1)}.
@@ -159,115 +93,86 @@ Return the result as a strict JSON object containing the exact file contents for
 
 Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON structure. Returns only the parseable JSON.`;
 
-        try {
-          const openRouterResponse = await fetch(
-            'https://openrouter.ai/api/v1/chat/completions',
-            {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${apiKey}`,
-                'HTTP-Referer': 'https://figma-to-lwc-accelerator.vercel.app',
-                'X-Title': 'Figma to LWC Accelerator'
-              },
-              body: JSON.stringify({
-                model: 'google/gemini-2.5-flash:free',
-                messages: [
-                  {
-                    role: 'user',
-                    content: [
-                      {
-                        type: 'text',
-                        text: prompt
-                      },
-                      {
-                        type: 'image_url',
-                        image_url: {
-                          url: `data:image/png;base64,${parsed.data.imageBase64}`
-                        }
-                      }
-                    ]
-                  }
-                ],
-                max_tokens: 4096,
-                response_format: {
-                  type: 'json_object'
-                }
-              })
-            }
-          );
-
-          if (!openRouterResponse.ok) {
-            const rawError = await openRouterResponse.text();
-            throw new Error(`OpenRouter API returned status ${openRouterResponse.status}: ${rawError}`);
-          }
-
-          const responseData = await openRouterResponse.json();
-          const rawText = responseData.choices?.[0]?.message?.content;
-          if (!rawText) {
-            throw new Error('Empty response from OpenRouter API');
-          }
-
-          const parsedResult = JSON.parse(rawText.trim());
-
-          const files = [
-            { path: `${compName}/${compName}.html`, kind: 'html', content: parsedResult.html },
-            { path: `${compName}/${compName}.js`, kind: 'js', content: parsedResult.js },
-            { path: `${compName}/${compName}.css`, kind: 'css', content: parsedResult.css },
-            { path: `${compName}/${compName}.js-meta.xml`, kind: 'metaXml', content: parsedResult.metaXml },
-            {
-              path: `${compName}/README.md`,
-              kind: 'readme',
-              content: `# ${compName}\n\nGenerated by Figma to Salesforce LWC Accelerator via Vision AI.`
-            }
-          ];
-
-          response.json({
-            componentName: compName,
-            files,
-            warnings: ['Generated using Vision AI. Verify behavior and alignment before deploying.'],
-            summary: {
-              fileCount: files.length,
-              warningCount: 1
+      try {
+        const openRouterResponse = await fetch(
+          'https://openrouter.ai/api/v1/chat/completions',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${apiKey}`,
+              'HTTP-Referer': 'https://figma-to-lwc-accelerator.vercel.app',
+              'X-Title': 'Figma to LWC Accelerator'
             },
-            validation: { valid: true, messages: [] }
-          });
-        } catch (err: any) {
-          console.error('OpenRouter Vision Generation failed:', err);
-          response.status(500).json({
-            error: 'OpenRouter Vision Generation failed',
-            message: err.message || String(err)
-          });
+            body: JSON.stringify({
+              model: 'google/gemini-2.5-flash:free',
+              messages: [
+                {
+                  role: 'user',
+                  content: [
+                    {
+                      type: 'text',
+                      text: prompt
+                    },
+                    {
+                      type: 'image_url',
+                      image_url: {
+                        url: `data:image/png;base64,${parsed.data.imageBase64}`
+                      }
+                    }
+                  ]
+                }
+              ],
+              max_tokens: 4096,
+              response_format: {
+                type: 'json_object'
+              }
+            })
+          }
+        );
+
+        if (!openRouterResponse.ok) {
+          const rawError = await openRouterResponse.text();
+          throw new Error(`OpenRouter API returned status ${openRouterResponse.status}: ${rawError}`);
         }
-        return;
-      }
 
-      // 2. Fall back to standard AST normalizer compiler flow
-      if (!parsed.data.rawFigmaNode) {
-        response.status(400).json({
-          error: 'Invalid request',
-          message: 'Either rawFigmaNode or imageBase64 is required.'
+        const responseData = await openRouterResponse.json();
+        const rawText = responseData.choices?.[0]?.message?.content;
+        if (!rawText) {
+          throw new Error('Empty response from OpenRouter API');
+        }
+
+        const parsedResult = JSON.parse(rawText.trim());
+
+        const files = [
+          { path: `${compName}/${compName}.html`, kind: 'html', content: parsedResult.html },
+          { path: `${compName}/${compName}.js`, kind: 'js', content: parsedResult.js },
+          { path: `${compName}/${compName}.css`, kind: 'css', content: parsedResult.css },
+          { path: `${compName}/${compName}.js-meta.xml`, kind: 'metaXml', content: parsedResult.metaXml },
+          {
+            path: `${compName}/README.md`,
+            kind: 'readme',
+            content: `# ${compName}\n\nGenerated by Figma to Salesforce LWC Accelerator via Vision AI.`
+          }
+        ];
+
+        response.json({
+          componentName: compName,
+          files,
+          warnings: ['Generated using Vision AI. Verify behavior and alignment before deploying.'],
+          summary: {
+            fileCount: files.length,
+            warningCount: 1
+          },
+          validation: { valid: true, messages: [] }
         });
-        return;
+      } catch (err: any) {
+        console.error('OpenRouter Vision Generation failed:', err);
+        response.status(500).json({
+          error: 'OpenRouter Vision Generation failed',
+          message: err.message || String(err)
+        });
       }
-
-      const bundle = dependencies.generateBundle(parsed.data);
-
-      const normalized = normalizeFigmaTree(parsed.data.rawFigmaNode);
-      const classified = classifyDesignNode(normalized);
-      const mapped = mapToSlds(classified);
-      const validation = validateLwcBundle(bundle, mapped);
-
-      response.json({
-        componentName: bundle.componentName,
-        files: bundle.files,
-        warnings: bundle.warnings,
-        summary: {
-          fileCount: bundle.files.length,
-          warningCount: bundle.warnings.length
-        },
-        validation
-      });
     })
   );
 

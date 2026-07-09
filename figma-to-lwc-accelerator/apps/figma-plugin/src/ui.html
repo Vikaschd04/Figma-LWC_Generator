@@ -1,260 +1,206 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8" />
     <title>Salesforce LWC Accelerator</title>
     <style>
+      /* Design Tokens & Theme Variables */
       :root {
         --slds-color-brand: #0176d3;
-        --slds-color-brand-hover: #014486;
-        --slds-color-background: #f3f3f3;
-        --slds-color-card-bg: #ffffff;
-        --slds-color-text: #181818;
+        --slds-color-brand-hover: #014b82;
+        --slds-color-text-default: #181818;
         --slds-color-text-weak: #444444;
+        --slds-color-background: #f3f3f3;
         --slds-color-border: #c9c9c9;
         --slds-color-success: #2e7d32;
         --slds-color-error: #ea001e;
-        --slds-color-warning: #fe9339;
+        --slds-color-warning: #b78103;
+      }
+
+      * {
+        box-sizing: border-box;
       }
 
       body {
-        font-family:
-          -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-        font-size: 13px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-size: 12px;
         line-height: 1.5;
-        color: var(--slds-color-text);
-        background-color: var(--slds-color-background);
+        color: var(--slds-color-text-default);
         margin: 0;
-        padding: 16px;
+        background-color: var(--slds-color-background);
         display: flex;
         flex-direction: column;
-        height: calc(100vh - 32px);
-        box-sizing: border-box;
+        height: 100vh;
+        overflow: hidden;
       }
 
-      /* Header Styling */
+      /* Header */
       .header {
+        background-color: white;
+        border-bottom: 1px solid var(--slds-color-border);
+        padding: 12px 16px;
         display: flex;
         align-items: center;
-        margin-bottom: 16px;
-        padding-bottom: 12px;
-        border-bottom: 1px solid var(--slds-color-border);
+        gap: 8px;
+        flex-shrink: 0;
       }
 
       .header-logo {
-        width: 24px;
-        height: 24px;
-        background-color: var(--slds-color-brand);
-        border-radius: 4px;
-        margin-right: 8px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: bold;
-        font-size: 14px;
+        font-size: 18px;
       }
 
       .header-title {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 700;
-        color: var(--slds-color-brand);
         margin: 0;
+        color: var(--slds-color-brand);
       }
 
-      /* Selection Card */
-      .selection-card {
-        background: var(--slds-color-card-bg);
+      /* Scrollable container */
+      .container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* Cards & Groups */
+      .card {
+        background-color: white;
         border: 1px solid var(--slds-color-border);
         border-radius: 4px;
-        padding: 12px;
-        margin-bottom: 16px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        padding: 16px;
       }
 
       .selection-title {
-        font-weight: 600;
-        margin: 0 0 6px 0;
         display: flex;
-        align-items: center;
         justify-content: space-between;
-      }
-
-      .badge {
-        font-size: 10px;
-        padding: 2px 6px;
-        border-radius: 12px;
-        font-weight: bold;
-        text-transform: uppercase;
-      }
-
-      .badge-active {
-        background-color: #e0f2fe;
-        color: #0369a1;
-      }
-
-      .badge-empty {
-        background-color: #f1f5f9;
-        color: #475569;
+        align-items: center;
+        margin-bottom: 8px;
+        font-weight: 700;
+        font-size: 13px;
       }
 
       .selection-details {
-        font-size: 11px;
         color: var(--slds-color-text-weak);
         margin: 0;
+        font-size: 11px;
       }
 
-      /* Tabs Styling */
-      .tabs {
-        display: flex;
-        border-bottom: 1px solid var(--slds-color-border);
-        margin-bottom: 12px;
+      /* Badges */
+      .badge {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 12px;
+        font-size: 9px;
+        font-weight: 700;
+        text-transform: uppercase;
       }
 
-      .tab {
-        padding: 8px 16px;
-        cursor: pointer;
-        font-weight: 600;
-        color: var(--slds-color-text-weak);
-        border-bottom: 3px solid transparent;
-        margin-right: 8px;
-        transition: all 0.2s;
+      .badge-empty {
+        background-color: #f3f3f3;
+        color: #747474;
+        border: 1px solid #c9c9c9;
       }
 
-      .tab:hover {
-        color: var(--slds-color-text);
-      }
-
-      .tab.active {
+      .badge-active {
+        background-color: #eaf5fe;
         color: var(--slds-color-brand);
-        border-bottom-color: var(--slds-color-brand);
+        border: 1px solid #a2d2fa;
       }
 
-      /* Tab Content panel */
-      .tab-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-      }
-
-      .panel {
-        display: none;
-        flex-direction: column;
-        flex: 1;
-        overflow-y: auto;
-      }
-
-      .panel.active {
-        display: flex;
-      }
-
-      /* Code & JSON Display */
-      .code-container {
-        position: relative;
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        margin-bottom: 12px;
-        overflow: hidden;
-      }
-
-      textarea.code-box {
-        width: 100%;
-        flex: 1;
-        font-family: 'Courier New', Courier, monospace;
-        font-size: 11px;
-        padding: 10px;
-        border: 1px solid var(--slds-color-border);
-        border-radius: 4px;
-        resize: none;
-        box-sizing: border-box;
-        background-color: #fafafa;
-        color: #333;
-        overflow-y: auto;
-      }
-
-      /* Inputs/Fields */
+      /* Form controls */
       .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
         margin-bottom: 12px;
       }
 
-      .form-group label {
-        display: block;
+      .form-group:last-child {
+        margin-bottom: 0;
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      label {
         font-weight: 600;
-        font-size: 11px;
-        margin-bottom: 4px;
         color: var(--slds-color-text-weak);
+        font-size: 11px;
       }
 
       .form-control {
         width: 100%;
-        padding: 6px 8px;
-        font-size: 12px;
+        padding: 8px 10px;
         border: 1px solid var(--slds-color-border);
         border-radius: 4px;
-        box-sizing: border-box;
+        font-size: 12px;
+        outline: none;
+        background-color: white;
       }
 
-      .form-row {
-        display: flex;
-        gap: 12px;
+      .form-control:focus {
+        border-color: var(--slds-color-brand);
+        box-shadow: 0 0 0 1px var(--slds-color-brand);
       }
 
-      .form-row .form-group {
-        flex: 1;
+      .form-control:disabled {
+        background-color: #f3f3f3;
+        color: #747474;
+        cursor: not-allowed;
       }
 
       /* Buttons */
       .btn {
         background-color: var(--slds-color-brand);
         color: white;
-        border: none;
-        padding: 8px 16px;
-        font-size: 12px;
+        border: 1px solid transparent;
+        padding: 10px 16px;
+        font-size: 13px;
         font-weight: 600;
         border-radius: 4px;
         cursor: pointer;
-        transition: background-color 0.2s;
-        display: flex;
+        display: inline-flex;
         align-items: center;
         justify-content: center;
+        width: 100%;
+        outline: none;
       }
 
-      .btn:hover {
+      .btn:hover:not(:disabled) {
         background-color: var(--slds-color-brand-hover);
       }
 
       .btn:disabled {
-        background-color: var(--slds-color-border);
+        background-color: #c9c9c9;
         cursor: not-allowed;
+        color: #747474;
       }
 
       .btn-secondary {
-        background-color: transparent;
-        color: var(--slds-color-brand);
-        border: 1px solid var(--slds-color-brand);
-        margin-right: 8px;
+        background-color: white;
+        color: #0176d3;
+        border: 1px solid var(--slds-color-border);
       }
 
-      .btn-secondary:hover {
-        background-color: rgba(1, 118, 211, 0.05);
+      .btn-secondary:hover:not(:disabled) {
+        background-color: #f3f3f3;
       }
 
-      .button-group {
-        display: flex;
-        justify-content: flex-end;
-        margin-top: 8px;
-      }
-
-      /* File Sub-Tabs for Generated Code */
-      .file-subtabs {
+      /* File Tabs & Preview */
+      .file-tabs {
         display: flex;
         flex-wrap: wrap;
         gap: 4px;
-        margin-bottom: 8px;
         border-bottom: 1px solid var(--slds-color-border);
-        padding-bottom: 4px;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
       }
 
       .subtab {
@@ -272,31 +218,52 @@
         color: white;
       }
 
+      .code-container {
+        flex: 1;
+        background-color: #1e293b;
+        border: 1px solid #0f172a;
+        border-radius: 4px;
+        padding: 8px;
+        display: flex;
+        flex-direction: column;
+        min-height: 250px;
+        max-height: 400px;
+      }
+
+      .code-box {
+        width: 100%;
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #f8fafc;
+        font-family: 'Courier New', Courier, monospace;
+        font-size: 11px;
+        resize: none;
+        outline: none;
+        white-space: pre;
+        overflow: auto;
+      }
+
       /* Loader */
       .spinner {
-        border: 3px solid rgba(0, 0, 0, 0.1);
-        width: 18px;
-        height: 18px;
+        border: 3px solid rgba(255, 255, 255, 0.3);
+        width: 16px;
+        height: 16px;
         border-radius: 50%;
         border-left-color: white;
-        animation: spin 1s linear infinite;
+        animation: spin 0.8s linear infinite;
         margin-right: 8px;
       }
 
       @keyframes spin {
-        0% {
-          transform: rotate(0deg);
-        }
-        100% {
-          transform: rotate(360deg);
-        }
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
       }
 
       /* Status Notifications */
       .alert {
         padding: 8px 12px;
         border-radius: 4px;
-        margin-top: 12px;
         font-size: 11px;
         display: none;
       }
@@ -326,135 +293,109 @@
   <body>
     <!-- Header -->
     <div class="header">
-      <div class="header-logo">⚙️</div>
-      <h1 class="header-title">Salesforce LWC Accelerator</h1>
+      <div class="header-logo">⚡</div>
+      <h1 class="header-title">Figma Visual LWC Generator</h1>
     </div>
 
-    <!-- Selection Status Card -->
-    <div class="selection-card">
-      <div class="selection-title">
-        <span id="node-name">No Selection</span>
-        <span id="node-badge" class="badge badge-empty">None</span>
-      </div>
-      <p class="selection-details" id="node-info">
-        Please select a component or group on the Figma canvas.
-      </p>
-    </div>
-
-    <!-- Tabs Navigation -->
-    <div class="tabs">
-      <div class="tab active" onclick="switchTab('json-tab')">Raw JSON</div>
-      <div class="tab" onclick="switchTab('code-tab')">Generated Code</div>
-    </div>
-
-    <!-- Tab Content Area -->
-    <div class="tab-content">
-      <!-- JSON Tab Panel -->
-      <div class="panel active" id="json-tab">
-        <div class="code-container">
-          <textarea
-            class="code-box"
-            id="json-box"
-            readonly
-            placeholder="Figma Selection JSON will be shown here..."
-          ></textarea>
+    <div class="container">
+      <!-- Selection Card -->
+      <div class="card">
+        <div class="selection-title">
+          <span id="node-name">No Selection</span>
+          <span id="node-badge" class="badge badge-empty">None</span>
         </div>
-        <div class="button-group">
-          <button class="btn" id="copy-json-btn" disabled onclick="copyJson()">📋 Copy JSON</button>
-        </div>
+        <p class="selection-details" id="node-info">
+          Please select a layout frame on your canvas to capture its visual mockup screenshot.
+        </p>
       </div>
 
-      <!-- Generated Code Tab Panel -->
-      <div class="panel" id="code-tab">
+      <!-- Config Form -->
+      <div class="card">
+        <div class="form-group">
+          <label for="comp-name-input">Component Name</label>
+          <input
+            type="text"
+            class="form-control"
+            id="comp-name-input"
+            placeholder="myComponent"
+            disabled
+          />
+        </div>
+
         <div class="form-row">
           <div class="form-group">
-            <label for="comp-name-input">Component Name</label>
+            <label for="target-select">Target Platform</label>
+            <select class="form-control" id="target-select" disabled>
+              <option value="lightning__RecordPage">Record Page</option>
+              <option value="lightning__AppPage">App Page</option>
+              <option value="lightning__HomePage">Home Page</option>
+              <option value="lightningCommunity__Page">Experience Page</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="api-version-input">API Version</label>
             <input
               type="text"
               class="form-control"
-              id="comp-name-input"
-              placeholder="myComponent"
+              id="api-version-input"
+              value="61.0"
               disabled
             />
           </div>
         </div>
 
-        <div class="form-row">
+        <!-- User Story Details -->
+        <div style="border-top: 1px solid var(--slds-color-border); margin: 12px 0; padding-top: 12px;">
           <div class="form-group">
-            <label for="target-select">Target Page Type</label>
-            <select class="form-control" id="target-select" disabled>
-              <option value="lightning__RecordPage">Record Page</option>
-              <option value="lightning__AppPage">App Page</option>
-              <option value="lightning__HomePage">Home Page</option>
-            </select>
+            <label for="story-title-input">User Story Title (Optional)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="story-title-input"
+              placeholder="e.g. User Profile Card UI"
+              disabled
+            />
           </div>
+
           <div class="form-group">
-            <label for="api-version-input">API Version</label>
-            <input type="text" class="form-control" id="api-version-input" value="61.0" disabled />
+            <label for="story-description-input">Description</label>
+            <textarea
+              class="form-control"
+              id="story-description-input"
+              rows="2"
+              placeholder="e.g. Displays current profile statistics..."
+              disabled
+              style="resize: none;"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="story-criteria-input">Acceptance Criteria (Comma-separated)</label>
+            <input
+              type="text"
+              class="form-control"
+              id="story-criteria-input"
+              placeholder="e.g. Must support edit button, must fit grid structure"
+              disabled
+            />
           </div>
         </div>
 
-        <div class="form-group" style="margin-top: 8px">
-          <label for="story-title-input">User Story Title</label>
-          <input
-            type="text"
-            class="form-control"
-            id="story-title-input"
-            placeholder="e.g., Register Account Form"
-            disabled
-          />
-        </div>
+        <button class="btn" id="generate-btn" disabled onclick="generateLwc()">
+          <div class="spinner" id="btn-spinner" style="display: none"></div>
+          ⚡ Generate LWC Code
+        </button>
+        <div class="alert" id="status-alert" style="margin-top: 12px;"></div>
+      </div>
 
-        <div class="form-group">
-          <label for="story-description-input">User Story Description</label>
-          <textarea
-            class="form-control"
-            id="story-description-input"
-            placeholder="As a sales rep, I want to..."
-            style="height: 50px; resize: none"
-            disabled
-          ></textarea>
+      <!-- Generated Files Output Area -->
+      <div id="generation-result" class="card" style="display: none; flex-direction: column;">
+        <div class="file-tabs" id="file-tabs-container"></div>
+        <div class="code-container">
+          <textarea class="code-box" id="preview-box" readonly></textarea>
         </div>
-
-        <div class="form-group">
-          <label for="story-criteria-input">Acceptance Criteria (comma separated)</label>
-          <input
-            type="text"
-            class="form-control"
-            id="story-criteria-input"
-            placeholder="e.g., Bind input values, Display toast alert"
-            disabled
-          />
-        </div>
-
-        <div class="form-group" style="margin-top: 12px; display: flex; align-items: center; gap: 8px;">
-          <input type="checkbox" id="vision-ai-toggle" style="cursor: pointer; width: auto;" disabled />
-          <label for="vision-ai-toggle" style="margin-bottom: 0; cursor: pointer; font-weight: 600;">⚡ Use Multimodal Vision AI (Gemini)</label>
-        </div>
-
-        <div class="button-group">
-          <button class="btn" id="generate-btn" disabled onclick="generateLwc()">
-            <div class="spinner" id="btn-spinner" style="display: none"></div>
-            ⚡ Generate LWC Code
-          </button>
-        </div>
-
-        <div
-          id="generation-result"
-          style="display: none; flex-direction: column; flex: 1; overflow: hidden; margin-top: 12px"
-        >
-          <div class="file-subtabs" id="file-tabs-container">
-            <!-- File subtabs dynamically created -->
-          </div>
-          <div class="code-container">
-            <textarea class="code-box" id="preview-box" readonly></textarea>
-          </div>
-          <div class="button-group">
-            <button class="btn btn-secondary" onclick="copyPreviewCode()">📋 Copy Code</button>
-          </div>
-        </div>
-
-        <div class="alert" id="status-alert"></div>
+        <button class="btn btn-secondary" style="margin-top: 8px;" onclick="copyPreviewCode()">📋 Copy Code</button>
       </div>
     </div>
 
@@ -464,7 +405,6 @@
       let generatedFiles = {};
       let activeFileKey = '';
 
-      // Handle incoming messages from the Figma plugin backend
       window.onmessage = (event) => {
         const msg = event.data.pluginMessage;
         if (!msg) return;
@@ -482,14 +422,10 @@
           const nodeNameEl = document.getElementById('node-name');
           const nodeBadgeEl = document.getElementById('node-badge');
           const nodeInfoEl = document.getElementById('node-info');
-          const jsonBoxEl = document.getElementById('json-box');
-          const copyJsonBtn = document.getElementById('copy-json-btn');
-
           const compNameInput = document.getElementById('comp-name-input');
           const targetSelect = document.getElementById('target-select');
           const apiVersionInput = document.getElementById('api-version-input');
           const generateBtn = document.getElementById('generate-btn');
-          const visionAiToggle = document.getElementById('vision-ai-toggle');
 
           if (node) {
             nodeNameEl.innerText = node.name;
@@ -498,16 +434,9 @@
 
             let detailText = `Node ID: ${node.id}`;
             if (node.width && node.height) {
-              detailText += ` • Size: ${Math.round(node.width)}x${Math.round(node.height)}`;
-            }
-            if (node.children) {
-              detailText += ` • Children: ${node.children.length}`;
+              detailText += ` • Captured Screenshot Size: ${Math.round(node.width)}x${Math.round(node.height)}`;
             }
             nodeInfoEl.innerText = detailText;
-
-            const jsonText = JSON.stringify(node, null, 2);
-            jsonBoxEl.value = jsonText;
-            copyJsonBtn.disabled = false;
 
             compNameInput.disabled = false;
             compNameInput.value = toCamelCase(node.name);
@@ -516,16 +445,12 @@
             document.getElementById('story-title-input').disabled = false;
             document.getElementById('story-description-input').disabled = false;
             document.getElementById('story-criteria-input').disabled = false;
-            visionAiToggle.disabled = false;
             generateBtn.disabled = false;
           } else {
             nodeNameEl.innerText = 'No Selection';
             nodeBadgeEl.innerText = 'None';
             nodeBadgeEl.className = 'badge badge-empty';
-            nodeInfoEl.innerText = 'Please select a component or group on the Figma canvas.';
-
-            jsonBoxEl.value = '';
-            copyJsonBtn.disabled = true;
+            nodeInfoEl.innerText = 'Please select a layout frame on your canvas to capture its visual mockup screenshot.';
 
             compNameInput.disabled = true;
             compNameInput.value = '';
@@ -537,11 +462,8 @@
             document.getElementById('story-description-input').value = '';
             document.getElementById('story-criteria-input').disabled = true;
             document.getElementById('story-criteria-input').value = '';
-            visionAiToggle.disabled = true;
-            visionAiToggle.checked = false;
             generateBtn.disabled = true;
 
-            // Clear previous code previews
             document.getElementById('generation-result').style.display = 'none';
             hideAlert();
           }
@@ -558,33 +480,11 @@
         return window.btoa(binary);
       }
 
-      function switchTab(tabId) {
-        document.querySelectorAll('.tab').forEach((tab, index) => {
-          tab.classList.remove('active');
-          if ((tabId === 'json-tab' && index === 0) || (tabId === 'code-tab' && index === 1)) {
-            tab.classList.add('active');
-          }
-        });
-
-        document.querySelectorAll('.panel').forEach((panel) => {
-          panel.classList.remove('active');
-        });
-        document.getElementById(tabId).classList.add('active');
-      }
-
-      function copyJson() {
-        const jsonBox = document.getElementById('json-box');
-        try {
-          jsonBox.select();
-          document.execCommand('copy');
-          notifyFigma('Figma JSON copied to clipboard!');
-        } catch (err) {
-          alert('Failed to copy JSON: ' + err);
-        }
-      }
-
       async function generateLwc() {
-        if (!activeNode) return;
+        if (!activeNode || !activeImageBase64) {
+          showAlert('Please select a valid layout frame containing visual canvas elements.', 'error');
+          return;
+        }
 
         const compName = document.getElementById('comp-name-input').value.trim();
         if (!/^[a-z][a-zA-Z0-9]*$/.test(compName)) {
@@ -597,12 +497,6 @@
 
         const target = document.getElementById('target-select').value;
         const apiVersion = document.getElementById('api-version-input').value.trim();
-        const visionAi = document.getElementById('vision-ai-toggle').checked;
-
-        if (visionAi && !activeImageBase64) {
-          showAlert('Failed to capture high-res frame image. Please try selecting the frame again.', 'error');
-          return;
-        }
 
         const spinner = document.getElementById('btn-spinner');
         const generateBtn = document.getElementById('generate-btn');
@@ -639,8 +533,7 @@
               },
               body: JSON.stringify({
                 componentName: compName,
-                rawFigmaNode: visionAi ? undefined : activeNode,
-                imageBase64: visionAi ? activeImageBase64 : undefined,
+                imageBase64: activeImageBase64,
                 options: {
                   target: target,
                   apiVersion: apiVersion,
@@ -658,10 +551,8 @@
 
           const data = await response.json();
 
-          // Map files
           generatedFiles = {};
           data.files.forEach((file) => {
-            const ext = file.path.split('.').pop();
             const name = file.path.split('/').pop();
             generatedFiles[name] = file.content;
           });
@@ -680,7 +571,7 @@
           notifyFigma('LWC Code generated!');
         } catch (err) {
           showAlert(
-            `Generation failed: ${err.message}. Ensure the backend service is running and accessible.`,
+            `Generation failed: ${err.message}. Ensure the backend service is running.`,
             'error'
           );
         } finally {

@@ -1,7 +1,7 @@
 {
   "name": "figma-to-lwc-vscode",
   "displayName": "Figma to Salesforce LWC Generator",
-  "description": "Generate standard Salesforce Lightning Web Components and SLDS layouts from Figma JSON.",
+  "description": "Generate standard Salesforce Lightning Web Components and SLDS layouts from Figma design screenshot images.",
   "version": "0.1.2",
   "publisher": "iamvikaas",
   "repository": {
@@ -28,7 +28,7 @@
     "commands": [
       {
         "command": "figma-to-lwc.generate",
-        "title": "Figma to LWC: Generate Component from JSON"
+        "title": "Figma to LWC: Generate Component from Image"
       }
     ],
     "menus": {

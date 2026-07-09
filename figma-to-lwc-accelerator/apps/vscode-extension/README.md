@@ -1,38 +1,35 @@
-# Figma to Salesforce LWC Generator
+# Figma to Salesforce LWC Generator (Visual)
 
-Convert Figma layout designs and User Story blueprints into standard Salesforce Lightning Web Components (LWC) and SLDS (Salesforce Lightning Design System) code.
+Convert Figma design screenshots and mockup images into standard Salesforce Lightning Web Components (LWC) and SLDS (Salesforce Lightning Design System) code using Gemini Vision AI.
 
 ---
 
 ## Features
 
-- **Instant Translation**: Convert Figma node design structures directly into clean, standards-compliant HTML, JS, CSS, and Meta-XML LWC files.
-- **User Story Integration**: Interprets functional user story requirements to generate reactive variables, change handlers, component events, and Apex bindings dynamically.
-- **Accessibility Auditing**: Built-in accessibility checker validations (contrast checks, missing labels, alternative alt text configurations).
-- **Automatic SFDX Directory Detection**: Resolves project structures (`sfdx-project.json`) and writes components directly into the local `force-app/main/default/lwc/` directory.
+- **Visual Translation**: Upload/select a Figma design screenshot image (PNG, JPG, SVG) and instantly convert it into clean, standards-compliant HTML, JS, CSS, and Meta-XML LWC files.
+- **User Story Integration**: Interprets optional functional user story requirements to generate reactive variables, input change handlers, component events, and logic configurations.
+- **Automatic SFDX Directory Detection**: Resolves Salesforce project structures (`sfdx-project.json`) and writes components directly into the local `force-app/main/default/lwc/` directory.
 
 ---
 
 ## Requirements & Prerequisites
 
 - **Salesforce DX Project**: An active Salesforce DX workspace on your computer containing `sfdx-project.json`.
-- **Figma Account**: Figma plugin client containing the **Figma to Salesforce LWC Generator** plugin to export design JSON payload representations.
+- **Figma Design Screenshot**: A PNG, JPG, or SVG screenshot of the selected component/frame from your Figma canvas.
 
 ---
 
 ## How to Use the Extension
 
-1. **Copy Design JSON from Figma**:
-   - Open your layout file inside the Figma app.
-   - Run the **Figma to Salesforce LWC Generator** plugin.
-   - Open the **Raw JSON** tab and copy the node metadata payload.
+1. **Take a Screenshot**:
+   - Take a clear screenshot of the desired design frame in Figma and save it to your local machine.
 2. **Execute inside VS Code**:
    - Open the Command Palette using `Cmd + Shift + P` (Mac) or `Ctrl + Shift + P` (Windows).
-   - Type **`Figma to LWC: Generate Component from JSON`** and hit Enter.
-   - Choose **📋 Paste JSON from Clipboard**.
-   - Name your component using camelCase notation (e.g. `cardRegisterAccount`).
+   - Type **`Figma to LWC: Generate Component from Image`** and hit Enter.
+   - Select your saved design screenshot image file from the file dialog.
+   - Enter your component name using camelCase notation (e.g. `cardRegisterAccount`).
    - Select a target layout framework (e.g. `lightning__RecordPage`).
+   - Enter optional User Story details to inject active controls.
 3. **Review**:
-   - The extension automatically transpiles the markup and places the output files inside your workspace LWC folder.
-   - Read the **Figma to LWC Output Channel** log console to check for accessibility warning audits.
+   - The extension automatically submits the image to the Vision compiler and writes the LWC bundle directly into your workspace's LWC folder.
    - Agree to open the LWC bundle in the editor window.
