@@ -85,14 +85,15 @@ Follow these strict rules:
    - Map design inputs to standard Salesforce base components (e.g. <lightning-input>, <lightning-combobox>, <lightning-button>, <lightning-badge>, <lightning-icon>).
    - Use correct variant attributes (e.g., variant="brand" for primary buttons, variant="neutral" for secondary buttons) to align with standard SLDS.
 
-4. Spacing, Colors & CSS:
+4. Spacing, Colors & CSS (SLDS Styling Hooks):
    - Do NOT use inline styles.
-   - Write standard CSS selectors inside "${compName}.css" for custom background styles, hover behaviors, font imports, borders, or specific flex alignments that exceed default SLDS classes.
+   - For custom colors, padding, borders, background, or spacing tweaks, override Salesforce design hook custom properties (e.g. --slds-c-card-color-background, --slds-c-button-color-border, --slds-c-input-spacing-block-start, etc.) inside selectors or :host inside "${compName}.css".
    - Prepend ':host { display: block; }' at the top of the stylesheet.
 
-5. Functional Logic:
+5. Functional Logic & Salesforce Wiring:
    - Based on the user story below, declare appropriate reactive state fields (@track) and write complete JS action controller methods (e.g., input change handlers, button click handlers, toast alert triggers, or public variables):
      ${userStoryPrompt}
+   - If the visual layout suggests standard query listings, search results, or record detail views, import and wire Salesforce standard adapters (e.g., @wire(getRecord) or Apex stubs) to mock data logic.
    - Implement event handlers with descriptive comments. Do not generate stub methods without logic.
 
 6. Accessibility (A11y):

@@ -5,3 +5,7 @@ coverage/
 *.log
 .DS_Store
 .vercel
+scripts/visual-*-temp.png
+scripts/visual-diff-output.png
+scripts/visual-render-temp.png
+
