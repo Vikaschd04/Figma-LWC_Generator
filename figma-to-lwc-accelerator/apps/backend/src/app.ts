@@ -8,11 +8,6 @@ const generateRequestSchema = z.object({
     target: z.string().optional(),
     apiVersion: z.string().optional(),
     generateReadme: z.boolean().optional()
-  }).optional(),
-  userStory: z.object({
-    title: z.string().optional(),
-    description: z.string().optional(),
-    acceptanceCriteria: z.array(z.string()).optional()
   }).optional()
 });
 
@@ -59,14 +54,6 @@ export function createBackendApp() {
       const compName = parsed.data.componentName;
       const target = parsed.data.options?.target ?? 'lightning__RecordPage';
       const apiVersion = parsed.data.options?.apiVersion ?? '61.0';
-      const userStory = parsed.data.userStory;
-
-      const userStoryPrompt = userStory
-        ? `Functional requirement details:
-   Title: ${userStory.title}
-   Description: ${userStory.description}
-   Acceptance Criteria: ${userStory.acceptanceCriteria?.join(', ') || ''}`
-        : 'No functional requirements provided.';
 
       const prompt = `You are a Principal Salesforce UI/UX Developer. Your task is to analyze the provided Figma design screenshot and generate a production-ready, pixel-perfect Salesforce Lightning Web Component (LWC) that visualizes it with high fidelity.
 
@@ -76,33 +63,28 @@ Follow these strict rules:
    - The JS controller class name must be: ${compName.charAt(0).toUpperCase() + compName.slice(1)}.
    - Ensure the template target page configuration is ${target} with API version ${apiVersion}.
 
-2. Alignment & Layout (Fidelity):
-   - Replicate the visual spacing, margins, padding, alignment, and flex wrapping.
-   - Use standard Salesforce Lightning design structures (<lightning-card>, layout grids, spacing utilities) wherever possible.
-   - Match all typography sizes, font weights, custom border colors, background colors, and rounded corners.
+2. Alignment, Layout & Custom Styling (Highest Visual Fidelity):
+   - Replicate the visual spacing, margins, padding, alignment, and flex/grid layout exactly.
+   - Do NOT rely on generic SLDS layout/card styling classes (like slds-card, slds-box, slds-grid) as the primary layout design, since they make the UI look different or standard Salesforce-generic.
+   - Instead, write custom HTML containers and target them with precise custom CSS selector rules inside "${compName}.css" to match the borders, background colors, custom spacing, text alignment, and dimensions of the Figma design exactly.
+   - Prepend ':host { display: block; }' at the top of the stylesheet.
+   - Do NOT use inline style attributes.
 
 3. Base Component Mapping:
-   - Map design inputs to standard Salesforce base components (e.g. <lightning-input>, <lightning-combobox>, <lightning-button>, <lightning-badge>, <lightning-icon>).
-   - Use correct variant attributes (e.g., variant="brand" for primary buttons, variant="neutral" for secondary buttons) to align with standard SLDS.
+   - Only use Salesforce base components for standard functional inputs/icons (e.g. <lightning-input>, <lightning-combobox>, <lightning-button>, <lightning-icon>). Ensure they are custom styled in the CSS to match the design's specific appearance.
 
-4. Spacing, Colors & CSS (SLDS Styling Hooks):
-   - Do NOT use inline styles.
-   - For custom colors, padding, borders, background, or spacing tweaks, override Salesforce design hook custom properties (e.g. --slds-c-card-color-background, --slds-c-button-color-border, --slds-c-input-spacing-block-start, etc.) inside selectors or :host inside "${compName}.css".
-   - Prepend ':host { display: block; }' at the top of the stylesheet.
+4. Zero Assumption of Functionality:
+   - Do NOT invent or assume any hidden business logic, complex integrations, fake Apex wires, data schemas, or controller state management that is not explicitly visible in the image.
+   - Build only the visual components, inputs, and text exactly as shown in the design screenshot.
+   - If buttons are visible, only declare standard empty onClick event handler methods in the JS controller class. Do not build hypothetical processes.
 
-5. Functional Logic & Salesforce Wiring:
-   - Based on the user story below, declare appropriate reactive state fields (@track) and write complete JS action controller methods (e.g., input change handlers, button click handlers, toast alert triggers, or public variables):
-     ${userStoryPrompt}
-   - If the visual layout suggests standard query listings, search results, or record detail views, import and wire Salesforce standard adapters (e.g., @wire(getRecord) or Apex stubs) to mock data logic.
-   - Implement event handlers with descriptive comments. Do not generate stub methods without logic.
-
-6. Accessibility (A11y):
+5. Accessibility (A11y):
    - Enforce WCAG guidelines: specify labels for all inputs, define alternative alt text configurations for images, use aria labels, and maintain proper heading hierarchy (h1, h2, h3).
 
-7. Outputs Required:
+6. Outputs Required:
    Generate exactly 4 files matching standard LWC structures:
    - "${compName}.html" (Component HTML template)
-   - "${compName}.js" (JS Controller class with all state and imports)
+   - "${compName}.js" (JS Controller class)
    - "${compName}.css" (CSS layout stylesheet)
    - "${compName}.js-meta.xml" (Salesforce metadata config specifying targets)
 

@@ -1,42 +1,20 @@
 # Figma to Salesforce LWC Accelerator (Visual-First)
 
-An enterprise developer tooling monorepo that accelerates Salesforce LWC UI development by compiling Figma design screenshots and mockup images directly into high-fidelity, standard Salesforce Lightning Web Components (LWC) and SLDS layout structures using Gemini Vision LLM.
+An enterprise developer tooling monorepo that accelerates Salesforce LWC UI development by compiling Figma design screenshots and mockup images directly into high-fidelity, custom-styled Salesforce Lightning Web Components (LWC) using Gemini Vision LLM.
 
 ---
 
 ## Why It Exists
 
-Standard design-to-code generators often yield fragile, non-semantic markup with heavy inline styles. This accelerator leverages Vision LLMs combined with SFDX directory resolution to output compliant, reviewable LWC packages:
-- **Zero Inline Styles**: Enforces scoped CSS classes and SLDS layout patterns.
-- **Salesforce Base Component Mapping**: Converts buttons, inputs, icons, and badges into Lightning counterparts rather than native divs.
-- **Reactive JS Controllers**: Automatically wires fields, event handlers, and toast notifications from user stories.
-- **Standard Salesforce DX Setup**: Places generated components directly into your local project workspace.
+Standard design-to-code generators often yield generic markup that loses layout details or deviates when rendered in Salesforce Orgs. This accelerator prioritizes:
+- **Highest Visual Fidelity (Custom CSS)**: Generates detailed, custom-scoped CSS selector rules inside `.css` rather than generic, standard-styled SLDS classes, preserving background color tones, padding ratios, border colors, and layout wraps exactly.
+- **Zero Functionality Assumption**: Avoids compiling imaginary controller states or unverified integrations.
+- **Automated Local Verification**: VS Code extension features a local visual correctness reporter that spins up Puppeteer to capture and compare the generated LWC component against the mockup, printing similarity indices directly to the developer's console output.
 
 ---
 
 ## Monorepo Architecture
 
-- [apps/backend](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/backend): A serverless Express backend deployed on Vercel that handles OpenRouter Vision AI generation using a robust multi-model fallback chain (`google/gemini-3.5-flash` -> `google/gemini-2.5-flash`).
-- [apps/figma-plugin](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/figma-plugin): A Figma Developer plugin that captures high-res PNG layouts and displays the generated LWC source codes dynamically in the editor panels.
-- [apps/vscode-extension](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/vscode-extension): A VS Code extension allowing developers to select a local design image file and write LWC bundles directly to disk.
-
----
-
-## Install & Run
-
-1. Install dependencies:
-   ```bash
-   npm install
-   ```
-2. Set your OpenRouter environment key:
-   ```bash
-   export OPENROUTER_API_KEY="your_api_key_here"
-   ```
-3. Run the backend API:
-   ```bash
-   npm run dev:backend
-   ```
-4. Run tests:
-   ```bash
-   npm test
-   ```
+- [apps/backend](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/backend): Express API running a robust multi-model fallback chain (`google/gemini-3.5-flash` -> `google/gemini-2.5-flash`).
+- [apps/figma-plugin](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/figma-plugin): Figma Developer plugin for screenshot-based layout generation.
+- [apps/vscode-extension](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/vscode-extension): VS Code extension incorporating headless browser layout verification and visual diff overlays.

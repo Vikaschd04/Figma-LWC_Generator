@@ -1,6 +1,22 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import puppeteer from 'puppeteer';
+import { PNG } from 'pngjs';
+import jpeg from 'jpeg-js';
+import pixelmatch from 'pixelmatch';
+
+function readImage(filePath: string): { width: number; height: number; data: Buffer } {
+  const buffer = fs.readFileSync(filePath);
+  // Check JPEG signature: FFD8
+  if (buffer[0] === 0xff && buffer[1] === 0xd8) {
+    const raw = jpeg.decode(buffer);
+    return { width: raw.width, height: raw.height, data: raw.data };
+  }
+  // Default to PNG
+  const png = PNG.sync.read(buffer);
+  return { width: png.width, height: png.height, data: png.data };
+}
 
 export function activate(context: vscode.ExtensionContext) {
   const outputChannel = vscode.window.createOutputChannel('Figma to LWC');
@@ -73,33 +89,6 @@ export function activate(context: vscode.ExtensionContext) {
 
         if (!apiVersion) {
           return;
-        }
-
-        // Optional User Story inputs to inject logical controls
-        const storyTitle = await vscode.window.showInputBox({
-          prompt: 'User Story Title (Optional)',
-          placeHolder: 'e.g. Account Registration Form'
-        });
-
-        let userStory = undefined;
-        if (storyTitle) {
-          const storyDesc = await vscode.window.showInputBox({
-            prompt: 'User Story Description (Optional)',
-            placeHolder: 'e.g. Captures user details and registers an account...'
-          });
-
-          const storyCriteria = await vscode.window.showInputBox({
-            prompt: 'Acceptance Criteria (Optional, comma-separated)',
-            placeHolder: 'e.g. must validate email, must have reset button'
-          });
-
-          userStory = {
-            title: storyTitle,
-            description: storyDesc || '',
-            acceptanceCriteria: storyCriteria
-              ? storyCriteria.split(',').map((s) => s.trim()).filter(Boolean)
-              : []
-          };
         }
 
         // Step 3: Resolve Export Location
@@ -186,8 +175,7 @@ export function activate(context: vscode.ExtensionContext) {
                 target: targetOption,
                 apiVersion: apiVersion,
                 generateReadme: true
-              },
-              userStory: userStory
+              }
             })
           }
         );
@@ -214,6 +202,101 @@ export function activate(context: vscode.ExtensionContext) {
 
         outputChannel.appendLine(`Successfully wrote files to: ${componentFolder}`);
 
+        // Step 6.5: Local Visual Correctness Verification & Comparison
+        try {
+          outputChannel.appendLine(`\nStarting local LWC Visual Quality comparison...`);
+
+          let htmlContent = fs.readFileSync(path.join(componentFolder, `${componentName}.html`), 'utf8');
+          htmlContent = htmlContent.replace(/<template>/gi, '').replace(/<\/template>/gi, '');
+
+          const cssPath = path.join(componentFolder, `${componentName}.css`);
+          const cssContent = fs.existsSync(cssPath) ? fs.readFileSync(cssPath, 'utf8') : '';
+
+          const previewHtml = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>LWC Visual Diff Preview</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/design-system/2.24.2/styles/salesforce-lightning-design-system.min.css"
+    />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: transparent;
+      }
+      /* Custom LWC CSS */
+      ${cssContent}
+    </style>
+  </head>
+  <body>
+    <div class="slds-scope" style="display: inline-block; width: 100%; height: 100%;">
+      ${htmlContent}
+    </div>
+  </body>
+</html>`;
+
+          const tempHtmlPath = path.join(componentFolder, 'visual-preview-temp.html');
+          fs.writeFileSync(tempHtmlPath, previewHtml, 'utf8');
+
+          const designImage = readImage(imagePath);
+          const width = designImage.width;
+          const height = designImage.height;
+
+          outputChannel.appendLine(`Design screenshot layout resolution: ${width}x${height}`);
+
+          const browser = await puppeteer.launch({ headless: true });
+          const page = await browser.newPage();
+          await page.setViewport({ width, height, deviceScaleFactor: 1 });
+          await page.goto(`file://${tempHtmlPath}`);
+
+          // Wait for rendering stability
+          await new Promise((resolve) => setTimeout(resolve, 500));
+
+          const screenshotPath = path.join(componentFolder, 'visual-render-temp.png');
+          await page.screenshot({ path: screenshotPath });
+          await browser.close();
+
+          const renderImage = readImage(screenshotPath);
+          const diffImage = new PNG({ width, height });
+          const numDiffPixels = pixelmatch(
+            designImage.data,
+            renderImage.data,
+            diffImage.data,
+            width,
+            height,
+            { threshold: 0.1 }
+          );
+
+          const totalPixels = width * height;
+          const diffPercentage = (numDiffPixels / totalPixels) * 100;
+          const similarityScore = 100 - diffPercentage;
+
+          const diffOutputPath = path.join(componentFolder, 'visual-diff-output.png');
+          fs.writeFileSync(diffOutputPath, PNG.sync.write(diffImage));
+
+          // Cleanup temp files
+          if (fs.existsSync(tempHtmlPath)) {
+            fs.unlinkSync(tempHtmlPath);
+          }
+          if (fs.existsSync(screenshotPath)) {
+            fs.unlinkSync(screenshotPath);
+          }
+
+          outputChannel.appendLine(`\n--- LWC VISUAL VERIFICATION REPORT ---`);
+          outputChannel.appendLine(`Layout Similarity Score: ${similarityScore.toFixed(2)}%`);
+          outputChannel.appendLine(`Layout Mismatch Index: ${diffPercentage.toFixed(2)}%`);
+          outputChannel.appendLine(`Total Mismatch Pixels: ${numDiffPixels} / ${totalPixels}`);
+          outputChannel.appendLine(`Visual Diff Markup Saved: ${diffOutputPath}`);
+          outputChannel.appendLine(`--------------------------------------\n`);
+
+          createdFiles.push(diffOutputPath);
+        } catch (vErr: any) {
+          outputChannel.appendLine(`Visual Verification Warning: ${vErr.message || vErr}`);
+        }
+
         if (data.warnings && data.warnings.length > 0) {
           outputChannel.appendLine('\nVision AI Warnings:');
           data.warnings.forEach((warning) => {
@@ -235,7 +318,7 @@ export function activate(context: vscode.ExtensionContext) {
         );
 
         if (viewOption === 'Open Files') {
-          const extensionPriority = ['.md', '.html', '.js', '.css'];
+          const extensionPriority = ['.md', '.html', '.js', '.css', '.png'];
           const sortedFiles = [...createdFiles].sort((a, b) => {
             const extA = path.extname(a);
             const extB = path.extname(b);
@@ -243,6 +326,10 @@ export function activate(context: vscode.ExtensionContext) {
           });
 
           for (const filePath of sortedFiles) {
+            // Avoid opening binary PNG file directly in text editors
+            if (path.extname(filePath) === '.png') {
+              continue;
+            }
             const document = await vscode.workspace.openTextDocument(filePath);
             await vscode.window.showTextDocument(document, { preview: false });
           }

@@ -1,35 +1,22 @@
-# Figma to Salesforce LWC Generator (Visual)
+# Figma to Salesforce LWC Generator (Visual-First)
 
-Convert Figma design screenshots and mockup images into standard Salesforce Lightning Web Components (LWC) and SLDS (Salesforce Lightning Design System) code using Gemini Vision AI.
-
----
-
-## Features
-
-- **Visual Translation**: Upload/select a Figma design screenshot image (PNG, JPG, SVG) and instantly convert it into clean, standards-compliant HTML, JS, CSS, and Meta-XML LWC files.
-- **User Story Integration**: Interprets optional functional user story requirements to generate reactive variables, input change handlers, component events, and logic configurations.
-- **Automatic SFDX Directory Detection**: Resolves Salesforce project structures (`sfdx-project.json`) and writes components directly into the local `force-app/main/default/lwc/` directory.
+Convert Figma design screenshots and mockup images into production-ready Salesforce Lightning Web Components (LWC) using Gemini Vision AI.
 
 ---
 
-## Requirements & Prerequisites
+## Key Capabilities
 
-- **Salesforce DX Project**: An active Salesforce DX workspace on your computer containing `sfdx-project.json`.
-- **Figma Design Screenshot**: A PNG, JPG, or SVG screenshot of the selected component/frame from your Figma canvas.
+- **Fidelity-First Custom Styling**: Instructs the LLM to output custom HTML containers and precise CSS selector rules in `.css` instead of generic SLDS card classes, preserving margins, rounded corners, and background fills exactly as they appear in the Figma mockup.
+- **Zero Functionality Assumption**: Focuses exclusively on recreating the design screenshot exactly, without generating imaginary controllers, Apex bindings, or fake state variables.
+- **Local Visual Verification**: After writing the LWC files to disk, the extension automatically spins up a local headless browser to render the component, compares it pixel-by-pixel against the design mockup, and logs a Layout Similarity Score to the Output Channel while saving a highlight overlay (`visual-diff-output.png`) in the component folder.
 
 ---
 
 ## How to Use the Extension
 
-1. **Take a Screenshot**:
-   - Take a clear screenshot of the desired design frame in Figma and save it to your local machine.
-2. **Execute inside VS Code**:
-   - Open the Command Palette using `Cmd + Shift + P` (Mac) or `Ctrl + Shift + P` (Windows).
-   - Type **`Figma to LWC: Generate Component from Image`** and hit Enter.
-   - Select your saved design screenshot image file from the file dialog.
-   - Enter your component name using camelCase notation (e.g. `cardRegisterAccount`).
-   - Select a target layout framework (e.g. `lightning__RecordPage`).
-   - Enter optional User Story details to inject active controls.
-3. **Review**:
-   - The extension automatically submits the image to the Vision compiler and writes the LWC bundle directly into your workspace's LWC folder.
-   - Agree to open the LWC bundle in the editor window.
+1. Save a clear screenshot of the desired design frame in Figma as a PNG or JPG.
+2. Open the Command Palette using `Cmd + Shift + P` (Mac) or `Ctrl + Shift + P` (Windows).
+3. Select **`Figma to LWC: Generate Component from Image`**.
+4. Choose your design screenshot image file.
+5. Provide a camelCase LWC component name (e.g. `cardRegisterAccount`) and select a layout target.
+6. Review the **Figma to LWC Output Channel** for the similarity index report and layout difference score.

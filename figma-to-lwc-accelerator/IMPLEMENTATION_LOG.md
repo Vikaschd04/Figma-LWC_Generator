@@ -707,3 +707,31 @@
 ## Tests Passed/Failed
 - All 9 test suites and 50 Jest unit tests passing successfully.
 - Redeployed onto Vercel production hosting.
+
+---
+
+## 2026-07-10 12:25 IST - VS Code Local Visual Verification & Custom CSS Priority
+
+## Files Created
+- `scripts/verify-lwc-visuals.ts`
+- `packages/test-fixtures/account-health-card.png`
+
+## Files Changed
+- `apps/backend/src/app.ts`
+- `apps/vscode-extension/src/extension.ts`
+- `apps/vscode-extension/package.json`
+- `apps/vscode-extension/README.md`
+- `README.md`
+- `PROJECT_STATUS.md`
+- `ROADMAP.md`
+- `.gitignore`
+
+## Features Implemented
+- **Custom CSS Engine Priority**: Replaced generic SLDS layout wrappers in backend prompts with instructions to write custom HTML containers and precise selector overrides in LWC CSS (avoiding generic layout overrides).
+- **Disabled Hypothetical State Generation**: Removed user story input prompts and logic context from both VS Code extension and backend API, disabling invented behaviors.
+- **Direct Visual verification in VS Code**: Integrated local Puppeteer/Pixelmatch directly in the VS Code extension script. Running generation will now display visual verification results in the output channel and output `visual-diff-output.png` directly inside the generated folder.
+
+## Tests Passed/Failed
+- All 9 Jest test suites and 50 tests passing green.
+- Extension compiles successfully (`npm run compile`).
+- Redeployed onto Vercel production hosting.
