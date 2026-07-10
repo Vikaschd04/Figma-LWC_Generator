@@ -1,76 +1,42 @@
-# Figma to Salesforce LWC Accelerator
+# Figma to Salesforce LWC Accelerator (Visual-First)
 
-Internal enterprise tooling for helping Salesforce development teams convert Figma UI designs and user stories into clean, reviewable Lightning Web Component assets.
+An enterprise developer tooling monorepo that accelerates Salesforce LWC UI development by compiling Figma design screenshots and mockup images directly into high-fidelity, standard Salesforce Lightning Web Components (LWC) and SLDS layout structures using Gemini Vision LLM.
 
-The project is intentionally phased. Phase 0 establishes the repository structure, tooling, and documentation foundation only. Later phases will add typed Figma models, normalization, SLDS mapping, LWC generation, a backend API, a VS Code extension, and a Figma plugin.
+---
 
 ## Why It Exists
 
-Design-to-code output often creates brittle markup, inline styles, and code that does not match Salesforce delivery standards. This accelerator prioritizes LWC best practices, SLDS compatibility, maintainability, developer review, testability, and documentation over pixel-perfect but hard-to-own generated code.
+Standard design-to-code generators often yield fragile, non-semantic markup with heavy inline styles. This accelerator leverages Vision LLMs combined with SFDX directory resolution to output compliant, reviewable LWC packages:
+- **Zero Inline Styles**: Enforces scoped CSS classes and SLDS layout patterns.
+- **Salesforce Base Component Mapping**: Converts buttons, inputs, icons, and badges into Lightning counterparts rather than native divs.
+- **Reactive JS Controllers**: Automatically wires fields, event handlers, and toast notifications from user stories.
+- **Standard Salesforce DX Setup**: Places generated components directly into your local project workspace.
 
-## Architecture Overview
+---
 
-- `apps/backend`: Express API for normalization, mapping, user-story-driven blueprint compilation, and LWC generation.
-- `apps/figma-plugin`: Figma editor plugin for real-time selection frame extraction and LWC file previewing.
-- `apps/vscode-extension`: VS Code extension for importing design selections from clipboard, resolving local Salesforce DX directories, and generating files.
-- `packages/core`: Shared orchestration: normalizer, classifier, blueprint compiler, and quality/a11y validation.
-- `packages/schemas`: Shared Zod validation schemas and TypeScript model definitions.
-- `packages/lwc-generator`: LWC code generator parsing mapped trees and blueprints.
-- `packages/slds-mapper`: Design element mapping to Salesforce base components and SLDS layouts.
-- `packages/test-fixtures`: Shared Figma selection JSON fixtures.
-- `docs`: Project architecture and developer user guides.
+## Monorepo Architecture
 
-## Install
+- [apps/backend](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/backend): A serverless Express backend deployed on Vercel that handles OpenRouter Vision AI generation using a robust multi-model fallback chain (`google/gemini-3.5-flash` -> `google/gemini-2.5-flash`).
+- [apps/figma-plugin](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/figma-plugin): A Figma Developer plugin that captures high-res PNG layouts and displays the generated LWC source codes dynamically in the editor panels.
+- [apps/vscode-extension](file:///Users/vivekkumar/Desktop/Salesforce/LWC_Figma_Generator/Figma-LWC_Generator/figma-to-lwc-accelerator/apps/vscode-extension): A VS Code extension allowing developers to select a local design image file and write LWC bundles directly to disk.
 
-```bash
-npm install
-```
+---
 
-## Run
+## Install & Run
 
-Run the backend API:
-
-```bash
-npm run dev:backend
-```
-
-Useful checks:
-
-```bash
-curl http://localhost:3000/health
-```
-
-## Test
-
-```bash
-npm test
-```
-
-Useful quality checks:
-
-```bash
-npm run lint
-```
-
-Strict compiler and formatter checks:
-
-```bash
-npm run typecheck
-npm run format:check
-```
-
-## Current MVP Capabilities
-
-- **Figma Integration**: Real-time selected frame parser traversing nested flex directions and Solid fills.
-- **Normalizer**: Transforms figma channels, paddings, borders, and margins into structural layout grids.
-- **Semantic Classifier**: Analyzes node style ratios, sizing, and names to identify inputs, cards, and buttons.
-- **SLDS Mapper**: Converts semantic targets into Salesforce base controls (`lightning-input`, `lightning-button`, `lightning-icon`) and SLDS grid patterns.
-- **Blueprint Compiler**: Scans product user stories for toast alerts, Apex controller calls, recordId contexts, and binds interactive inputs.
-- **LWC Generator**: Emits standard, fully-fleshed markup, CSS stylesheet rules, metadata descriptor XMLs, and class lifecycle hooks.
-- **Quality & Accessibility Validator**: Audits code outcomes against WCAG standard labels, alt properties, inline style blocks, and controller import decorators.
-- **VS Code Extension**: Supports clipboard importing, local Salesforce DX paths auto-detection, and files previewing.
-
-## Known Limitations
-
-- Component classification is rule-based and intentionally conservative.
-- Generated LWC behavior is a functional MVP (button clicks, form changes, toast alerts) and should be validated before production deployment.
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+2. Set your OpenRouter environment key:
+   ```bash
+   export OPENROUTER_API_KEY="your_api_key_here"
+   ```
+3. Run the backend API:
+   ```bash
+   npm run dev:backend
+   ```
+4. Run tests:
+   ```bash
+   npm test
+   ```

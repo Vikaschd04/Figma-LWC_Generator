@@ -677,3 +677,33 @@
 ## Next Recommended Step
 
 - Phase 12: MVP Hardening.
+
+---
+
+## 2026-07-10 12:00 IST - Visual-First Image-to-LWC Generator Refactoring
+
+## Files Created
+- None.
+
+## Files Changed
+- `apps/backend/src/app.ts`
+- `apps/backend/src/__tests__/app.test.ts`
+- `apps/figma-plugin/src/code.ts`
+- `apps/figma-plugin/src/ui.html`
+- `apps/vscode-extension/src/extension.ts`
+- `apps/vscode-extension/package.json`
+- `apps/vscode-extension/README.md`
+- `README.md`
+- `PROJECT_STATUS.md`
+- `ROADMAP.md`
+
+## Features Implemented
+- **Pure Visual Generator**: Removed all AST rule-based parser logic, classifier stages, and raw JSON inputs across the plugin and VS Code extension.
+- **Unified Figma UI**: Simplified plugin dashboard to support only high-resolution visual screenshot captures and direct multi-file tab previewing/copying.
+- **Local Image Upload for VS Code**: Configured the extension commands to prompt users to choose a local layout image file (`PNG`, `SVG`, `JPG`), convert it to Base64, upload it to Vercel, and write the resulting LWC package folder directly.
+- **OpenRouter Fallback Chain**: Programmed a robust sequential model fallback list (`google/gemini-3.5-flash` capped at 2048 tokens -> `google/gemini-2.5-flash` at 4096 tokens) to satisfy billing credit constraints and avoid token errors.
+- **Refined Prompt Engineering**: Refined the visual generation instructions in the backend API to enforce strict SLDS layouts, scoped CSS styles, reactive state JS fields, action event handlers, and WCAG accessibility standards.
+
+## Tests Passed/Failed
+- All 9 test suites and 50 Jest unit tests passing successfully.
+- Redeployed onto Vercel production hosting.

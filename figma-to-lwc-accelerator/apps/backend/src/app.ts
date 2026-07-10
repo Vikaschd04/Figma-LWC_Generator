@@ -68,22 +68,44 @@ export function createBackendApp() {
    Acceptance Criteria: ${userStory.acceptanceCriteria?.join(', ') || ''}`
         : 'No functional requirements provided.';
 
-      const prompt = `You are an expert Salesforce UI/UX Developer. Your task is to analyze the provided Figma design screenshot and generate a production-ready, highly accurate Salesforce Lightning Web Component (LWC) matching it.
+      const prompt = `You are a Principal Salesforce UI/UX Developer. Your task is to analyze the provided Figma design screenshot and generate a production-ready, pixel-perfect Salesforce Lightning Web Component (LWC) that visualizes it with high fidelity.
 
-Guidelines:
-1. Naming: The component folder/file name must be: ${compName}. Inside the JS controller, name the class: ${compName.charAt(0).toUpperCase() + compName.slice(1)}.
-2. Targets: Target page configuration: ${target}.
-3. Alignment & Layout: Use standard Salesforce base components (e.g. <lightning-button>, <lightning-input>, <lightning-combobox>, <lightning-icon>, etc.) and SLDS utility classes wherever possible.
-4. Spacing, Colors & Styling: For exact background colors, padding, borders, and typography that do not match default SLDS styles, write scoped CSS classes inside the generated stylesheet file. Prepended ':host { display: block; }' in the CSS.
-5. Interactive Logic: Inject properties and event handlers matching the following criteria:
-   ${userStoryPrompt}
-6. File Outputs Required: You must generate 4 files matching the standard Salesforce LWC structure:
-   - Component HTML template file (named "${compName}.html")
-   - Component JavaScript controller file (named "${compName}.js")
-   - Component CSS stylesheet file (named "${compName}.css")
-   - Component metadata configuration file (named "${compName}.js-meta.xml" targeting ${target} with API version ${apiVersion})
+Follow these strict rules:
+1. Component Structure & Naming:
+   - Component directory and filenames must be named: ${compName}.
+   - The JS controller class name must be: ${compName.charAt(0).toUpperCase() + compName.slice(1)}.
+   - Ensure the template target page configuration is ${target} with API version ${apiVersion}.
 
-Return the result as a strict JSON object containing the exact file contents for each key:
+2. Alignment & Layout (Fidelity):
+   - Replicate the visual spacing, margins, padding, alignment, and flex wrapping.
+   - Use standard Salesforce Lightning design structures (<lightning-card>, layout grids, spacing utilities) wherever possible.
+   - Match all typography sizes, font weights, custom border colors, background colors, and rounded corners.
+
+3. Base Component Mapping:
+   - Map design inputs to standard Salesforce base components (e.g. <lightning-input>, <lightning-combobox>, <lightning-button>, <lightning-badge>, <lightning-icon>).
+   - Use correct variant attributes (e.g., variant="brand" for primary buttons, variant="neutral" for secondary buttons) to align with standard SLDS.
+
+4. Spacing, Colors & CSS:
+   - Do NOT use inline styles.
+   - Write standard CSS selectors inside "${compName}.css" for custom background styles, hover behaviors, font imports, borders, or specific flex alignments that exceed default SLDS classes.
+   - Prepend ':host { display: block; }' at the top of the stylesheet.
+
+5. Functional Logic:
+   - Based on the user story below, declare appropriate reactive state fields (@track) and write complete JS action controller methods (e.g., input change handlers, button click handlers, toast alert triggers, or public variables):
+     ${userStoryPrompt}
+   - Implement event handlers with descriptive comments. Do not generate stub methods without logic.
+
+6. Accessibility (A11y):
+   - Enforce WCAG guidelines: specify labels for all inputs, define alternative alt text configurations for images, use aria labels, and maintain proper heading hierarchy (h1, h2, h3).
+
+7. Outputs Required:
+   Generate exactly 4 files matching standard LWC structures:
+   - "${compName}.html" (Component HTML template)
+   - "${compName}.js" (JS Controller class with all state and imports)
+   - "${compName}.css" (CSS layout stylesheet)
+   - "${compName}.js-meta.xml" (Salesforce metadata config specifying targets)
+
+Return your output as a strict JSON object with these exact keys:
 {
   "html": "string",
   "css": "string",
@@ -91,7 +113,7 @@ Return the result as a strict JSON object containing the exact file contents for
   "metaXml": "string"
 }
 
-Do not include any markdown syntax, backticks, or HTML wrappers outside the JSON structure. Returns only the parseable JSON.`;
+Do not surround the output with markdown backticks, prefixing, or commentary outside the JSON structure. Returns only the parseable JSON.`;
 
       try {
         const modelsToTry = [

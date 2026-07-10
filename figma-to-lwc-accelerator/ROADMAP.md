@@ -1,39 +1,20 @@
-# Roadmap
+# Roadmap — Figma to Salesforce LWC Accelerator
 
-## MVP Roadmap
+## Phase 14: Visual Correctness & Layout Enhancements (Next Phase)
 
-- Phase 0: Repository Setup.
-- Phase 1: Define Core Data Models.
-- Phase 2: Build Figma JSON Normalizer.
-- Phase 3: Build Component Classifier.
-- Phase 4: Build SLDS Mapping Engine.
-- Phase 5: Build LWC Code Generator.
-- Phase 6: Build Backend API.
-- Phase 7: Build VS Code Extension MVP.
-- Phase 8: Build Figma Plugin MVP.
-- Phase 9: Add User Story Input and Feature Blueprint.
-- Phase 10: Add Validation and Quality Checks.
-- Phase 11: Add Sample Generated Components.
-- Phase 12: MVP Hardening.
+- **LWC Visual Comparison Tool**:
+  * Build a test rendering harness to mount generated LWC code inside a headless browser (Puppeteer) and capture a screenshot.
+  * Compare LWC screenshots against the original Figma mockup image using pixel-diff algorithms to compute a layout deviation score.
+- **SLDS Token Extraction**:
+  * Parse CSS custom property styles directly from the design image to map color palettes and margins into standard SLDS global styling hooks (`--slds-c-card-*`).
+- **Interactive Component Stubs**:
+  * Generate stub integrations for Apex `@wire` adapters if the visual layout suggests standard query components (e.g. data tables, form inputs).
 
-## Post-MVP Roadmap
+---
 
-- Add persisted generation history.
-- Add richer design token mapping.
-- Add design review annotations.
-- Add project-specific mapping profiles.
-- Add optional AI-assisted behavior recommendations behind explicit review.
+## Phase 15: Developer Workflows & Integrations
 
-## Future Enhancements
-
-- Salesforce DX project detection.
-- Apex stub generation from explicit metadata contracts.
-- Accessibility scoring and remediation suggestions.
-- Design-token export for Salesforce styling hooks where appropriate.
-- Visual comparison workflow for generated samples.
-
-## Known Technical Debt
-
-- Phase 0 package directories are placeholders until their implementation phases begin.
-- No package-level build outputs are defined yet.
-- Manual QA workflows for Figma and VS Code are documented later in the MVP.
+- **VS Code Clipboard Image Detection**:
+  * Automatically detect when a PNG is copied to the clipboard and offer to generate the LWC component directly.
+- **Apex Controller Autogeneration**:
+  * Create accompanying Apex controller classes to back up LWC component actions when backend data transactions are requested.
